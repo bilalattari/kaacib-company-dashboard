@@ -9,6 +9,8 @@ import Dashboard from './pages/Dashboard/Dashboard'
 import Branches from './pages/Branches/Branches'
 import Bookings from './pages/Bookings/Bookings'
 import Assets from './pages/Assets/Assets'
+import PrivateRoute from './routes/PrivateRoute'
+import PublicRoute from './routes/PublicRoute'
 
 
 function DashboardHome() {
@@ -18,17 +20,17 @@ function DashboardHome() {
 export default function App() {
   return (
     <Provider store={store}>
-    <BrowserRouter>
+      <BrowserRouter>
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/" element={<DashboardLayout />}>
+          <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+          <Route path="/" element={<PrivateRoute><DashboardLayout /></PrivateRoute>}>
             <Route index element={<Dashboard />} />
             <Route path="branches" element={<Branches />} />
             <Route path="bookings" element={<Bookings />} />
             <Route path="assets" element={<Assets />} />
           </Route>
         </Routes>
-    </BrowserRouter>
+      </BrowserRouter>
     </Provider>
   )
 }
