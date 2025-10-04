@@ -19,12 +19,20 @@ export default function AssetFormModal({
       loadBranches();
       
       if (editing) {
+        console.log('Editing asset data:', editing);
         form.setFieldsValue({
-          ...editing,
+          name: editing.name,
+          asset_type: editing.asset_type,
+          status: editing.status,
           branch_id: editing.branch?._id,
           location_address: editing.location?.address || '',
           location_lat: editing.location?.coordinates?.lat || '',
-          location_lng: editing.location?.coordinates?.lng || ''
+          location_lng: editing.location?.coordinates?.lng || '',
+          serial_number: editing.serial_number,
+          model_number: editing.model_number,
+          brand: editing.brand,
+          description: editing.description,
+          maintenance_interval_days: editing.maintenance_interval_days
         });
       } else {
         form.resetFields();

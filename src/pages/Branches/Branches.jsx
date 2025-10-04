@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Card, Tag, Space, Button, Input, Select, Typography, Row, Col, Statistic, Badge, Tooltip, message } from 'antd';
-import { SearchOutlined, ReloadOutlined, EyeOutlined, PlusOutlined, PhoneOutlined, MailOutlined } from '@ant-design/icons';
+import { SearchOutlined, ReloadOutlined, EyeOutlined, PlusOutlined, PhoneOutlined, MailOutlined, EditOutlined } from '@ant-design/icons';
 import BranchFormModal from '../../components/modals/BranchFormModal';
 import BranchViewModal from '../../components/modals/BranchViewModal';
 import api from '../../helpers/api';
@@ -132,6 +132,31 @@ export default function Branches() {
         />
       )
     },
+    { 
+      title: 'Branch Type', 
+      dataIndex: 'is_main_branch',
+      render: (isMain) => (
+        <Tag color={isMain ? 'gold' : 'blue'}>
+          {isMain ? '🏢 Main Branch' : '📍 Sub Branch'}
+        </Tag>
+      )
+    },
+    { 
+      title: 'Statistics', 
+      render: (_, record) => (
+        <div style={{ fontSize: '12px' }}>
+          <div style={{ color: '#1890ff', fontWeight: 500 }}>
+            📦 {record.total_assets || 0} Assets
+          </div>
+          <div style={{ color: '#52c41a', fontWeight: 500 }}>
+            👥 {record.total_users || 0} Users
+          </div>
+          <div style={{ color: '#faad14', fontWeight: 500 }}>
+            📋 {record.total_bookings || 0} Bookings
+          </div>
+        </div>
+      )
+    },
     {
       title: 'Actions',
       width: 120,
@@ -147,7 +172,7 @@ export default function Branches() {
           <Tooltip title="Edit Branch">
             <Button 
               type="text" 
-              icon={<PlusOutlined />} 
+              icon={<EditOutlined />} 
               onClick={() => handleEditBranch(record)}
             />
           </Tooltip>

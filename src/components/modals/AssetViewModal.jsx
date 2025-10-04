@@ -48,11 +48,11 @@ export default function AssetViewModal({
           Close
         </Button>
       ]}
-      width={1000}
+      width={900}
       style={{ top: 20 }}
       destroyOnHidden
     >
-      <div style={{ padding: '20px 0', maxHeight: '70vh', overflowY: 'auto' }}>
+      <div style={{ padding: '20px 0', maxHeight: '70vh', overflowX: 'hidden' , overflowY: 'auto'}}>
         <Row gutter={[16, 16]}>
           {/* Basic Information */}
           <Col xs={24} sm={12}>

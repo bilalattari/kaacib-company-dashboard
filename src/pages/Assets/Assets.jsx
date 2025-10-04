@@ -107,11 +107,16 @@ export default function Assets() {
         message.success('Service request created successfully');
         setServiceOpen(false);
         setEditing(null);
+        return { success: true };
       } else {
-        message.error(result.payload || 'Failed to create service request');
+        const errorMessage = result.payload || 'Failed to create service request';
+        message.error(errorMessage);
+        return { success: false, error: errorMessage };
       }
     } catch (error) {
-      message.error('Failed to create service request');
+      const errorMessage = 'Failed to create service request';
+      message.error(errorMessage);
+      return { success: false, error: errorMessage };
     }
   };
 

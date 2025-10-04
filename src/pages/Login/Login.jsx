@@ -1,19 +1,19 @@
 import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { login } from '../../features/auth/authSlice';
+import { useAuth } from '../../contexts/AuthContext';
 import { Button, Card, Form, Input, Typography, Row, Col, Divider, Space } from 'antd';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {  Building2, Shield, Users, TrendingUp } from 'lucide-react';
 
 export default function Login() {
-  const dispatch = useDispatch();
-  const { loading } = useSelector(s => s.auth);
+  const { login, isLoading, error } = useAuth();
+  const navigate = useNavigate();
   const [form] = Form.useForm();
 
-  const onFinish = (values) => {
-    dispatch(login(values)).unwrap().then(() => {
-      window.location.href = '/';
-    }).catch(() => {});
+  const onFinish = async (values) => {
+    const result = await login(values);
+    if (result.success) {
+      navigate('/');
+    }
   };
 
   return (
@@ -171,7 +171,7 @@ export default function Login() {
                   type="primary" 
                   htmlType="submit" 
                   block 
-                  loading={loading}
+                  loading={isLoading}
                   style={{ 
                     height: '48px',
                     fontSize: '16px',
@@ -191,15 +191,6 @@ export default function Login() {
                 Secure Login
               </Typography.Text>
             </Divider>
-
-            <div style={{ textAlign: 'center' }}>
-              <Typography.Text type="secondary" style={{ fontSize: '14px' }}>
-                Don't have an account?{' '}
-                <Link to="/signup" style={{ color: '#1890ff', fontWeight: '500' }}>
-                  Contact Administrator
-                </Link>
-              </Typography.Text>
-            </div>
           </div>
         </Col>
       </Row>

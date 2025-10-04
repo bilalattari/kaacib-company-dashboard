@@ -2,8 +2,7 @@ import React from 'react';
 import { Layout, Menu, theme as antdTheme, Avatar, Dropdown, Button, Typography, Space, Badge } from 'antd';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Building2, Cuboid, Boxes, CalendarClock, LogOut, User, Settings, Bell } from 'lucide-react';
-import { useDispatch, useSelector } from 'react-redux';
-import { logout } from '../features/auth/authSlice';
+import { useAuth } from '../contexts/AuthContext';
 
 const { Header, Sider, Content } = Layout;
 
@@ -11,15 +10,14 @@ export default function DashboardLayout() {
   const [collapsed, setCollapsed] = React.useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { user } = useSelector(s => s.auth);
+  const { user, logout } = useAuth();
   console.log(user);
   const {
     token: { colorBgContainer, colorPrimary }
   } = antdTheme.useToken();
 
   const handleLogout = () => {
-    dispatch(logout());
+    logout();
     navigate('/login');
   };
 

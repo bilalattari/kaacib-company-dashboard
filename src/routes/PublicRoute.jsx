@@ -1,10 +1,27 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import Cookies from 'js-cookie';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function PublicRoute({ children }) {
-  const token = Cookies.get('company-auth-token');
-  if (token) return <Navigate to="/" replace />;
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh' 
+      }}>
+        <div>Loading...</div>
+      </div>
+    );
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
   return children;
 }
 

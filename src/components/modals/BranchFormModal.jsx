@@ -20,8 +20,15 @@ export default function BranchFormModal({
       loadBranches();
       
       if (editing) {
+        console.log('Editing branch data:', editing);
         form.setFieldsValue({
-          ...editing,
+          name: editing.name,
+          address: editing.address,
+          city: editing.city,
+          area: editing.area,
+          phone: editing.phone,
+          email: editing.email,
+          status: editing.status,
           coordinates_lat: editing.coordinates?.lat,
           coordinates_lng: editing.coordinates?.lng
         });

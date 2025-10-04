@@ -45,6 +45,7 @@ export const fetchAssetHistory = createAsyncThunk(
 export const createAssetServiceRequest = createAsyncThunk(
   'assets/serviceRequest',
   async ({ id, data }) => {
+    delete data.visiting_fee
     const res = await api.post(`${ENDPOINTS.COMPANY_ASSET_BY_ID(id)}/service-request`, data);
     return res.data?.data || res.data;
   }
