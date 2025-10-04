@@ -13,30 +13,35 @@ export default function BranchFormModal({
 }) {
   const [form] = Form.useForm();
   const [branches, setBranches] = useState([]);
+  // Hardcoded coordinates per request
+  const HARDCODED_COORDS = { lat: 0, lng: 0 };
 
   useEffect(() => {
-    if (open) {
-      // Load branches for form select if needed
-      loadBranches();
-      
+    if (!open) return;
+
+    const init = async () => {
+      // if any reference data is needed in future, load here
+      // await loadBranches();
+
       if (editing) {
-        console.log('Editing branch data:', editing);
+        form.resetFields();
+
         form.setFieldsValue({
-          name: editing.name,
-          address: editing.address,
-          city: editing.city,
-          area: editing.area,
-          phone: editing.phone,
-          email: editing.email,
-          status: editing.status,
-          coordinates_lat: editing.coordinates?.lat,
-          coordinates_lng: editing.coordinates?.lng
+          name: editing.name ?? '',
+          address: editing.address ?? '',
+          city: editing.city ?? '',
+          area: editing.area ?? '',
+          phone: editing.phone ?? '',
+          email: editing.email ?? '',
+          status: editing.status ?? 'active',
         });
       } else {
         form.resetFields();
       }
-    }
-  }, [open, editing]);
+    };
+
+    init();
+  }, [open, editing, form]);
 
   const loadBranches = async () => {
     try {
@@ -52,14 +57,8 @@ export default function BranchFormModal({
     try {
       const values = await form.validateFields();
       
-      // Build coordinates object if provided
-      let coordinates = null;
-      if (values.coordinates_lat && values.coordinates_lng) {
-        coordinates = {
-          lat: parseFloat(values.coordinates_lat),
-          lng: parseFloat(values.coordinates_lng)
-        };
-      }
+      // Use hardcoded coordinates per request
+      const coordinates = { ...HARDCODED_COORDS };
 
       const payload = {
         name: values.name,
@@ -68,7 +67,7 @@ export default function BranchFormModal({
         area: values.area || '',
         phone: values.phone || '',
         email: values.email || '',
-        coordinates: coordinates,
+        coordinates,
         status: values.status || 'active'
       };
 
@@ -99,9 +98,11 @@ export default function BranchFormModal({
       width={800}
       style={{ top: 20 }}
       destroyOnHidden
+      forceRender
       maskClosable={false}
+      styles={{ body: { maxHeight: '70vh', overflowY: 'auto' , overflowX: 'hidden', paddingTop: 20, paddingBottom: 20 } }}
     >
-      <div style={{ padding: '20px 0' }}>
+      <div>
         <Form
           form={form}
           layout="vertical"
@@ -230,43 +231,7 @@ export default function BranchFormModal({
               </Form.Item>
             </Col>
 
-            <Col xs={24}>
-              <Typography.Text type="secondary" style={{ fontSize: '14px', fontWeight: 500 }}>
-                📍 Location Coordinates (Optional)
-              </Typography.Text>
-            </Col>
-
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="coordinates_lat"
-                label="Latitude"
-                rules={[
-                  { pattern: /^-?([0-8]?[0-9]|90)(\.[0-9]{1,6})?$/, message: 'Invalid latitude' }
-                ]}
-              >
-                <Input 
-                  placeholder="Enter latitude" 
-                  type="number" 
-                  step="any"
-                />
-              </Form.Item>
-            </Col>
-
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="coordinates_lng"
-                label="Longitude"
-                rules={[
-                  { pattern: /^-?((1[0-7][0-9])|([0-9]?[0-9]))(\.[0-9]{1,6})?$/, message: 'Invalid longitude' }
-                ]}
-              >
-                <Input 
-                  placeholder="Enter longitude" 
-                  type="number" 
-                  step="any"
-                />
-              </Form.Item>
-            </Col>
+            
           </Row>
         </Form>
       </div>

@@ -8,7 +8,10 @@ export const ENDPOINTS = {
   COMPANY_PROFILE: 'company/profile',
 
   // Company Branch Management (company scoped)
+  // If companyId is provided, use scoped routes, otherwise default to current company
   GET_COMPANY_BRANCHES: () => `company/branches`,
+  CREATE_COMPANY_BRANCH: (companyId) => `company/branches`,
+  UPDATE_COMPANY_BRANCH: (companyId, id) => `company/branches/${id}`,
   GET_COMPANY_ADMINS: () => `company/users`,
 
   // Company Assets

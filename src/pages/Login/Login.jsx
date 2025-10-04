@@ -80,7 +80,7 @@ export default function Login() {
                   color: 'rgba(255,255,255,0.9)',
                   lineHeight: '1.6'
                 }}>
-                  Manage your company assets, branches, and operations with our comprehensive business management platform.
+                  Manage your company assets, branches, and operations with our comprehensive KAACIB business management platform.
                 </Typography.Text>
               </div>
 

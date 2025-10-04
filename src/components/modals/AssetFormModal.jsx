@@ -13,32 +13,37 @@ export default function AssetFormModal({
 }) {
   const [form] = Form.useForm();
   const [branches, setBranches] = useState([]);
+  // Hardcoded coordinates per request
+  const HARDCODED_COORDS = { lat: 0, lng: 0 };
 
   useEffect(() => {
-    if (open) {
-      loadBranches();
-      
+    if (!open) return;
+
+    const init = async () => {
+      await loadBranches();
+
       if (editing) {
-        console.log('Editing asset data:', editing);
+        form.resetFields();
+
         form.setFieldsValue({
-          name: editing.name,
-          asset_type: editing.asset_type,
-          status: editing.status,
-          branch_id: editing.branch?._id,
+          name: editing.name ?? '',
+          asset_type: editing.asset_type ?? undefined,
+          status: editing.status ?? undefined,
+          branch_id: editing.branch_id || editing.branch?._id || undefined,
           location_address: editing.location?.address || '',
-          location_lat: editing.location?.coordinates?.lat || '',
-          location_lng: editing.location?.coordinates?.lng || '',
-          serial_number: editing.serial_number,
-          model_number: editing.model_number,
-          brand: editing.brand,
-          description: editing.description,
-          maintenance_interval_days: editing.maintenance_interval_days
+          serial_number: editing.serial_number || '',
+          model_number: editing.model_number || '',
+          brand: editing.brand || '',
+          description: editing.description || '',
+          maintenance_interval_days: editing.maintenance_interval_days ?? 90,
         });
       } else {
         form.resetFields();
       }
-    }
-  }, [open, editing]);
+    };
+
+    init();
+  }, [open, editing, form]);
 
   const loadBranches = async () => {
     try {
@@ -59,10 +64,7 @@ export default function AssetFormModal({
       if (values.location_address) {
         location = {
           address: values.location_address,
-          coordinates: values.location_lat && values.location_lng ? {
-            lat: parseFloat(values.location_lat),
-            lng: parseFloat(values.location_lng)
-          } : undefined
+          coordinates: { ...HARDCODED_COORDS },
         };
       }
 
@@ -118,10 +120,12 @@ export default function AssetFormModal({
       width={900}
       style={{ top: 20 }}
       destroyOnHidden
+      forceRender
       maskClosable={false}
     >
       <div style={{ padding: '20px 0', maxHeight: '70vh', overflowY: 'auto' }}>
         <Form
+          key={(editing && editing._id) || 'new'}
           form={form}
           layout="vertical"
           preserve={false}
@@ -219,43 +223,7 @@ export default function AssetFormModal({
               </Form.Item>
             </Col>
 
-            <Col xs={24}>
-              <Typography.Text type="secondary" style={{ fontSize: '14px', fontWeight: 500 }}>
-                📍 Location Coordinates (Optional)
-              </Typography.Text>
-            </Col>
-
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="location_lat"
-                label="Latitude"
-                rules={[
-                  { pattern: /^-?([0-8]?[0-9]|90)(\.[0-9]{1,6})?$/, message: 'Invalid latitude' }
-                ]}
-              >
-                <Input 
-                  placeholder="Enter latitude" 
-                  type="number" 
-                  step="any"
-                />
-              </Form.Item>
-            </Col>
-
-            <Col xs={24} sm={12}>
-              <Form.Item
-                name="location_lng"
-                label="Longitude"
-                rules={[
-                  { pattern: /^-?((1[0-7][0-9])|([0-9]?[0-9]))(\.[0-9]{1,6})?$/, message: 'Invalid longitude' }
-                ]}
-              >
-                <Input 
-                  placeholder="Enter longitude" 
-                  type="number" 
-                  step="any"
-                />
-              </Form.Item>
-            </Col>
+            
 
             <Col xs={24} sm={12}>
               <Form.Item

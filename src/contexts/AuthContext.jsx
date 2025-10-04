@@ -99,7 +99,7 @@ const TokenManager = {
   getToken: () => {
     const token = document.cookie
       .split('; ')
-      .find(row => row.startsWith('token='))
+      .find(row => row.startsWith('company-auth-token='))
       ?.split('=')[1];
     return token ? decodeURIComponent(token) : null;
   },
@@ -118,7 +118,7 @@ const TokenManager = {
     const expires = new Date();
     expires.setTime(expires.getTime() + (24 * 60 * 60 * 1000)); // 24 hours
 
-    document.cookie = `token=${encodeURIComponent(token)}; expires=${expires.toUTCString()}; path=/; secure; samesite=strict`;
+    document.cookie = `company-auth-token=${encodeURIComponent(token)}; expires=${expires.toUTCString()}; path=/; secure; samesite=strict`;
     
     if (refreshToken) {
       const refreshExpires = new Date();
@@ -129,7 +129,7 @@ const TokenManager = {
 
   // Clear tokens from cookies
   clearTokens: () => {
-    document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = 'company-auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
   },
 
