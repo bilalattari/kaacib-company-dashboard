@@ -1,12 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Card, Tag, Space, Button, Input, Select, Typography, Drawer } from 'antd';
+import { Table, Card, Tag, Space, Button, Input, Select, Typography, Row, Col, Statistic, Badge, Tooltip, message } from 'antd';
+import { SearchOutlined, ReloadOutlined, EyeOutlined, PlusOutlined, PhoneOutlined, MailOutlined } from '@ant-design/icons';
+import BranchFormModal from '../../components/modals/BranchFormModal';
+import BranchViewModal from '../../components/modals/BranchViewModal';
 import api from '../../helpers/api';
 import { ENDPOINTS } from '../../helpers/endPoints';
 
 export default function Branches() {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState([]);
-  const [open, setOpen] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [viewOpen, setViewOpen] = useState(false);
+  const [editing, setEditing] = useState(null);
   const [detail, setDetail] = useState(null);
   const [filters, setFilters] = useState({ status: '', search: '' });
   const companyId = localStorage.getItem('company-id') || 'me';
@@ -23,50 +28,273 @@ export default function Branches() {
 
   useEffect(() => { fetchData(); }, [filters.status]);
 
-  const columns = [
-    { title: 'Branch', dataIndex: 'name' },
-    { title: 'City', dataIndex: 'city' },
-    { title: 'Contact', dataIndex: 'phone', render: (v, r) => (<div>{r.phone}<div className="text-gray-500 text-xs">{r.email}</div></div>) },
-    { title: 'Status', dataIndex: 'status', render: s => <Tag color={s==='active'?'green':'red'}>{(s||'').toUpperCase()}</Tag> },
-    { title: 'Action', key: 'action', render: (_, record) => (
-      <Space>
-        <Button size="small" onClick={() => { setDetail(record); setOpen(true); }}>View</Button>
-      </Space>
-    ) },
-  ];
+  const handleCreateBranch = async (payload) => {
+    try {
+      setLoading(true);
+      const res = await api.post(ENDPOINTS.CREATE_COMPANY_BRANCH(companyId), payload);
+      message.success('Branch created successfully');
+      setFormOpen(false);
+      fetchData();
+    } catch (error) {
+      message.error(error.response?.data?.message || 'Failed to create branch');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  return (
-    <div>
-      <Card style={{ marginBottom: 16 }}>
-        <div className="flex gap-3 items-center">
-          <Typography.Title level={5} style={{ margin: 0 }}>Branch Management</Typography.Title>
-          <div className="ml-auto flex gap-2">
-            <Input.Search placeholder="Search branches" allowClear style={{ width: 240 }} onSearch={(v)=>setFilters(p=>({...p, search:v}))} />
-            <Select placeholder="Status" allowClear style={{ width: 160 }} onChange={(v)=>setFilters(p=>({...p, status:v||''}))}>
-              <Select.Option value="active">Active</Select.Option>
-              <Select.Option value="inactive">Inactive</Select.Option>
-            </Select>
-            <Button onClick={fetchData}>Refresh</Button>
+  const handleUpdateBranch = async (payload) => {
+    try {
+      setLoading(true);
+      const res = await api.put(ENDPOINTS.UPDATE_COMPANY_BRANCH(companyId, editing._id), payload);
+      message.success('Branch updated successfully');
+      setFormOpen(false);
+      setEditing(null);
+      fetchData();
+    } catch (error) {
+      message.error(error.response?.data?.message || 'Failed to update branch');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleViewBranch = (branch) => {
+    setDetail(branch);
+    setViewOpen(true);
+  };
+
+  const handleEditBranch = (branch) => {
+    setEditing(branch);
+    setFormOpen(true);
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active': return 'success';
+      case 'inactive': return 'default';
+      default: return 'default';
+    }
+  };
+
+  const columns = [
+    { 
+      title: 'Branch Information', 
+      dataIndex: 'name',
+      render: (text, record) => (
+        <div>
+          <div style={{ fontWeight: 600, color: '#1890ff', fontSize: '16px' }}>
+            {/* <BuildingOutlined style={{ marginRight: '8px' }} /> */}
+            {text}
+          </div>
+          <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+            {record.area && `📍 ${record.area}`}
           </div>
         </div>
-      </Card>
-
-      <Card>
-        <Table rowKey="_id" loading={loading} dataSource={data} columns={columns} pagination={{ pageSize: 10 }} />
-      </Card>
-
-      <Drawer open={open} onClose={()=>setOpen(false)} title={detail?.name} width={680}>
-        {detail && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <Card><Typography.Text type="secondary">Address</Typography.Text><div>{detail.address||'N/A'}</div></Card>
-            <Card><Typography.Text type="secondary">City</Typography.Text><div>{detail.city||'N/A'}</div></Card>
-            <Card><Typography.Text type="secondary">Area</Typography.Text><div>{detail.area||'N/A'}</div></Card>
-            <Card><Typography.Text type="secondary">Status</Typography.Text><div>{(detail.status||'').toUpperCase()}</div></Card>
-            <Card><Typography.Text type="secondary">Latitude</Typography.Text><div>{detail.coordinates?.lat??'N/A'}</div></Card>
-            <Card><Typography.Text type="secondary">Longitude</Typography.Text><div>{detail.coordinates?.lng??'N/A'}</div></Card>
+      )
+    },
+    { 
+      title: 'Location', 
+      dataIndex: 'city',
+      render: (city, record) => (
+        <div>
+          <div style={{ fontWeight: 500 }}>{city}</div>
+          <div style={{ fontSize: '12px', color: '#666' }}>
+            {record.address}
           </div>
-        )}
-      </Drawer>
+        </div>
+      )
+    },
+    { 
+      title: 'Contact Information', 
+      render: (_, record) => (
+        <div>
+          {record.phone && (
+            <div style={{ display: 'flex', alignItems: 'center', marginBottom: '4px' }}>
+              <PhoneOutlined style={{ marginRight: '6px', color: '#52c41a' }} />
+              <span style={{ fontSize: '14px' }}>{record.phone}</span>
+            </div>
+          )}
+          {record.email && (
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <MailOutlined style={{ marginRight: '6px', color: '#1890ff' }} />
+              <span style={{ fontSize: '12px', color: '#666' }}>{record.email}</span>
+            </div>
+          )}
+        </div>
+      )
+    },
+    { 
+      title: 'Status', 
+      dataIndex: 'status', 
+      render: (status) => (
+        <Badge 
+          status={getStatusColor(status)} 
+          text={<span style={{ textTransform: 'capitalize', fontWeight: 500 }}>{status}</span>} 
+        />
+      )
+    },
+    {
+      title: 'Actions',
+      width: 120,
+      render: (_, record) => (
+        <Space size="small">
+          <Tooltip title="View Details">
+            <Button 
+              type="text" 
+              icon={<EyeOutlined />} 
+              onClick={() => handleViewBranch(record)}
+            />
+          </Tooltip>
+          <Tooltip title="Edit Branch">
+            <Button 
+              type="text" 
+              icon={<PlusOutlined />} 
+              onClick={() => handleEditBranch(record)}
+            />
+          </Tooltip>
+        </Space>
+      )
+    }
+  ];
+
+  // Calculate statistics
+  const stats = {
+    total: data.length,
+    active: data.filter(b => b.status === 'active').length,
+    inactive: data.filter(b => b.status === 'inactive').length
+  };
+
+  return (
+    <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
+      {/* Header Section */}
+      <div style={{ marginBottom: '24px' }}>
+        <Typography.Title level={2} style={{ margin: 0, color: '#1890ff' }}>
+          Branch Management
+        </Typography.Title>
+        <Typography.Text type="secondary">
+          Manage and monitor your company branches across different locations
+        </Typography.Text>
+      </div>
+
+      {/* Statistics Cards */}
+      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+        <Col xs={24} sm={12} md={8}>
+          <Card>
+            <Statistic
+              title="Total Branches"
+              value={stats.total}
+              prefix="🏢"
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} md={8}>
+          <Card>
+            <Statistic
+              title="Active Branches"
+              value={stats.active}
+              prefix="✅"
+              valueStyle={{ color: '#52c41a' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} md={8}>
+          <Card>
+            <Statistic
+              title="Inactive Branches"
+              value={stats.inactive}
+              prefix="⏸️"
+              valueStyle={{ color: '#faad14' }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Filters and Actions */}
+      <Card style={{ marginBottom: '16px' }}>
+        <Row gutter={[16, 16]} align="middle">
+          <Col xs={24} sm={12} md={8}>
+            <Input.Search
+              placeholder="Search branches by name, city, or area..."
+              allowClear
+              size="large"
+              prefix={<SearchOutlined />}
+              onSearch={(v) => setFilters(p => ({ ...p, search: v }))}
+              style={{ width: '100%' }}
+            />
+          </Col>
+          <Col xs={24} sm={6} md={4}>
+            <Select
+              placeholder="Filter by Status"
+              allowClear
+              size="large"
+              style={{ width: '100%' }}
+              onChange={(v) => setFilters(p => ({ ...p, status: v || '' }))}
+            >
+              <Select.Option value="active">✅ Active</Select.Option>
+              <Select.Option value="inactive">⏸️ Inactive</Select.Option>
+            </Select>
+          </Col>
+          <Col xs={24} sm={12} md={12}>
+            <Space size="middle">
+              <Button 
+                icon={<ReloadOutlined />} 
+                onClick={fetchData}
+                size="large"
+              >
+                Refresh
+              </Button>
+              <Button 
+                type="primary" 
+                icon={<PlusOutlined />} 
+                size="large"
+                onClick={() => {
+                  setEditing(null);
+                  setFormOpen(true);
+                }}
+              >
+                Add New Branch
+              </Button>
+            </Space>
+          </Col>
+        </Row>
+      </Card>
+
+      {/* Branches Table */}
+      <Card>
+        <Table 
+          rowKey="_id" 
+          loading={loading} 
+          dataSource={data} 
+          columns={columns} 
+          pagination={{ 
+            pageSize: 10, 
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => `${range[0]}-${range[1]} of ${total} branches`
+          }}
+          scroll={{ x: 1000 }}
+        />
+      </Card>
+
+      {/* Branch Form Modal */}
+      <BranchFormModal
+        open={formOpen}
+        onClose={() => {
+          setFormOpen(false);
+          setEditing(null);
+        }}
+        onSubmit={editing ? handleUpdateBranch : handleCreateBranch}
+        editing={editing}
+        loading={loading}
+      />
+
+      {/* Branch View Modal */}
+      <BranchViewModal
+        open={viewOpen}
+        onClose={() => setViewOpen(false)}
+        branch={detail}
+        loading={loading}
+      />
     </div>
   );
 }
