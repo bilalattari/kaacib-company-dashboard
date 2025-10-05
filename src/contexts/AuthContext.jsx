@@ -24,6 +24,7 @@ const initialState = {
   refreshToken: null,
   isAuthenticated: false,
   isLoading: false,
+  isLoggingIn: false,
   error: null,
   tokenExpiry: null
 };
@@ -34,7 +35,7 @@ const authReducer = (state, action) => {
     case AUTH_ACTIONS.LOGIN_START:
       return {
         ...state,
-        isLoading: true,
+        isLoggingIn: true,
         error: null
       };
 
@@ -46,7 +47,7 @@ const authReducer = (state, action) => {
         refreshToken: action.payload.refreshToken,
         tokenExpiry: action.payload.tokenExpiry,
         isAuthenticated: true,
-        isLoading: false,
+        isLoggingIn: false,
         error: null
       };
 
@@ -58,7 +59,7 @@ const authReducer = (state, action) => {
         refreshToken: null,
         tokenExpiry: null,
         isAuthenticated: false,
-        isLoading: false,
+        isLoggingIn: false,
         error: action.payload
       };
 
@@ -368,6 +369,7 @@ export const AuthProvider = ({ children }) => {
     token: state.token,
     isAuthenticated: state.isAuthenticated,
     isLoading: state.isLoading,
+    isLoggingIn: state.isLoggingIn,
     error: state.error,
 
     // Actions

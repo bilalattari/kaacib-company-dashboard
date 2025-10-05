@@ -1,1 +1,50 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom KAACIB Styles */
+@layer base {
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .btn-kaacib {
+    @apply bg-kaacib-gradient text-white font-semibold py-3 px-6 rounded-lg shadow-kaacib hover:shadow-kaacib-lg transition-all duration-300;
+  }
+  
+  .btn-kaacib-primary {
+    @apply bg-kaacib-primary text-white font-semibold py-3 px-6 rounded-lg shadow-kaacib hover:shadow-kaacib-lg transition-all duration-300;
+  }
+  
+  .btn-kaacib-secondary {
+    @apply bg-kaacib-secondary text-white font-semibold py-3 px-6 rounded-lg shadow-kaacib hover:shadow-kaacib-lg transition-all duration-300;
+  }
+  
+  .card-kaacib {
+    @apply bg-white rounded-xl shadow-kaacib border border-gray-100;
+  }
+  
+  /* KAACIB Custom Classes - Using Tailwind's color system */
+  .text-kaacib-primary {
+    @apply text-primary;
+  }
+  
+  .text-kaacib-secondary {
+    @apply text-secondary;
+  }
+  
+  .bg-kaacib-primary {
+    @apply bg-primary;
+  }
+  
+  .bg-kaacib-secondary {
+    @apply bg-secondary;
+  }
+  
+  /* Force KAACIB logo color */
+  .kaacib-logo {
+    @apply text-secondary;
+  }
+}

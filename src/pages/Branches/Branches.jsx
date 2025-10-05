@@ -81,11 +81,11 @@ export default function Branches() {
       dataIndex: 'name',
       render: (text, record) => (
         <div>
-          <div style={{ fontWeight: 600, color: '#1890ff', fontSize: '16px' }}>
+          <div className="font-semibold text-kaacib-primary text-base">
             {/* <BuildingOutlined style={{ marginRight: '8px' }} /> */}
             {text}
           </div>
-          <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>
+          <div className="text-xs text-gray-600 mt-1">
             {record.area && `📍 ${record.area}`}
           </div>
         </div>
@@ -189,53 +189,53 @@ export default function Branches() {
   };
 
   return (
-    <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
+    <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header Section */}
-      <div style={{ marginBottom: '24px' }}>
-        <Typography.Title level={2} style={{ margin: 0, color: '#1890ff' }}>
+      <div className="mb-6">
+        <Typography.Title level={2} className="m-0 text-kaacib-primary">
           Branch Management
         </Typography.Title>
-        <Typography.Text type="secondary">
+        <Typography.Text type="secondary" className="text-base">
           Manage and monitor your company branches across different locations
         </Typography.Text>
       </div>
 
       {/* Statistics Cards */}
-      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+      <Row gutter={[16, 16]} className="mb-6">
         <Col xs={24} sm={12} md={8}>
-          <Card>
+          <Card className="card-kaacib">
             <Statistic
               title="Total Branches"
               value={stats.total}
               prefix="🏢"
-              valueStyle={{ color: '#1890ff' }}
+              valueStyle={{ color: '#133260' }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} md={8}>
-          <Card>
+          <Card className="card-kaacib">
             <Statistic
               title="Active Branches"
               value={stats.active}
               prefix="✅"
-              valueStyle={{ color: '#52c41a' }}
+              valueStyle={{ color: '#FF3605' }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} md={8}>
-          <Card>
+          <Card className="card-kaacib">
             <Statistic
               title="Inactive Branches"
               value={stats.inactive}
               prefix="⏸️"
-              valueStyle={{ color: '#faad14' }}
+              valueStyle={{ color: '#133260' }}
             />
           </Card>
         </Col>
       </Row>
 
       {/* Filters and Actions */}
-      <Card style={{ marginBottom: '16px' }}>
+      <Card className="card-kaacib mb-4">
         <Row gutter={[16, 16]} align="middle">
           <Col xs={24} sm={12} md={8}>
             <Input.Search

@@ -44,42 +44,20 @@ export default function DashboardLayout() {
   ];
 
   return (
-    <Layout
-      style={{
-        height: '100vh',          // ✅ Fix to full viewport height
-        overflow: 'hidden',       // ✅ Disable scrolling on body layout
-        background: '#f5f5f5'
-      }}
-    >
+    <Layout className="h-screen overflow-hidden bg-gray-50">
       <Sider
         collapsible
         collapsed={collapsed}
         onCollapse={setCollapsed}
         width={260}
-        style={{
-          background: 'linear-gradient(180deg, #002140 0%, #002140 100%)',
-          boxShadow: '2px 0 8px rgba(0,0,0,0.1)'
-        }}
+        className="bg-kaacib-primary shadow-lg"
       >
-        <div style={{
-          textAlign: 'center',
-          padding: '20px 16px',
-          borderBottom: '1px solid rgba(255,255,255,0.1)'
-        }}>
-          <div style={{
-            color: 'white',
-            fontSize: collapsed ? '18px' : '24px',
-            fontWeight: 'bold',
-            letterSpacing: '1px'
-          }}>
-            {collapsed ? 'K' : 'KAACIB'}
-          </div>
+         <div className="text-center p-5 border-b border-white/10">
+           <div className={`${collapsed ? 'text-lg' : 'text-2xl'} font-bold text-[#FF3605]`} >
+             {collapsed ? 'K' : 'KAACIB'}
+           </div>
           {!collapsed && (
-            <div style={{
-              color: 'rgba(255,255,255,0.8)',
-              fontSize: '12px',
-              marginTop: '4px'
-            }}>
+            <div className="text-white/80 text-xs mt-1">
               Company Portal
             </div>
           )}
@@ -89,51 +67,40 @@ export default function DashboardLayout() {
           theme="dark"
           mode="inline"
           selectedKeys={[location.pathname]}
-          style={{
-            background: 'transparent',
-            border: 'none',
-            marginTop: '20px'
-          }}
+          className="bg-transparent border-none mt-5"
           items={[
             {
               key: '/',
               icon: <Building2 size={18} />,
-              label: <Link to="/" style={{ color: 'white' }}>Dashboard</Link>,
-              style: { marginBottom: '8px' }
+              label: <Link to="/" className="text-white">Dashboard</Link>,
+              className: "mb-2"
             },
             {
               key: '/branches',
               icon: <Cuboid size={18} />,
-              label: <Link to="/branches" style={{ color: 'white' }}>Branches</Link>,
-              style: { marginBottom: '8px' }
+              label: <Link to="/branches" className="text-white">Branches</Link>,
+              className: "mb-2"
             },
             {
               key: '/bookings',
               icon: <CalendarClock size={18} />,
-              label: <Link to="/bookings" style={{ color: 'white' }}>Bookings</Link>,
-              style: { marginBottom: '8px' }
+              label: <Link to="/bookings" className="text-white">Bookings</Link>,
+              className: "mb-2"
             },
             {
               key: '/assets',
               icon: <Boxes size={18} />,
-              label: <Link to="/assets" style={{ color: 'white' }}>Assets</Link>,
-              style: { marginBottom: '8px' }
+              label: <Link to="/assets" className="text-white">Assets</Link>,
+              className: "mb-2"
             },
           ]}
         />
       </Sider>
 
       <Layout>
-        <Header style={{
-          background: 'white',
-          padding: '0 24px',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between'
-        }}>
+        <Header className="bg-white px-6 shadow-sm flex items-center justify-between">
           <div>
-            <Typography.Title level={4} style={{ margin: 0, color: '#1890ff' }}>
+            <Typography.Title level={4} className="m-0 text-white">
               Welcome back, {user?.first_name || 'User'}!
             </Typography.Title>
           </div>
@@ -143,7 +110,7 @@ export default function DashboardLayout() {
               <Button
                 type="text"
                 icon={<Bell size={18} />}
-                style={{ color: '#666' }}
+                className="text-gray-600"
               />
             </Badge>
 
@@ -152,23 +119,20 @@ export default function DashboardLayout() {
               placement="bottomRight"
               arrow
             >
-              <Button type="text" style={{ padding: '4px 8px', height: 'auto' }}>
+              <Button type="text" className="px-2 py-1 h-auto">
                 <Space>
                   <Avatar
                     size="small"
-                    style={{
-                      background: colorPrimary,
-                      color: 'white'
-                    }}
+                    className="bg-kaacib-primary text-white"
                   >
                     {user?.first_name?.[0] || 'U'}
                   </Avatar>
                   {!collapsed && (
-                    <div style={{ textAlign: 'left' }}>
-                      <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                    <div className="text-left">
+                      <div className="text-sm font-medium">
                         {user?.first_name} {user?.last_name}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#666' }}>
+                      <div className="text-xs text-gray-600">
                         {user?.email}
                       </div>
                     </div>
@@ -179,23 +143,11 @@ export default function DashboardLayout() {
           </Space>
         </Header>
 
-        <Content
-          style={{
-            // margin: '24px',
-            background: 'transparent',
-            overflow: 'auto',        // ✅ Enable scrolling inside content only
-          }}
-        >
-          <div style={{
-            background: 'white',
-            borderRadius: '12px',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
-            minHeight: 'calc(100vh - 120px)', // optional
-            overflow: 'auto' // ✅ Only scroll internal area if too long
-          }}>
+        <Content className="bg-transparent overflow-auto">
+          <div className="bg-white rounded-xl shadow-kaacib min-h-[calc(100vh-120px)] overflow-auto">
             <Outlet />
           </div>
-      </Content>
+        </Content>
     </Layout>
     </Layout >
   );

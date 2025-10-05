@@ -1,73 +1,41 @@
 import React from 'react';
-import AuthDemo from '../../components/AuthDemo';
 
 export default function Dashboard() {
   return (
-    <div style={{ padding: '24px' }}>
-      <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '24px', color: '#1890ff' }}>
-        Company Dashboard
+    <div className="p-6">
+       <h2 className="text-2xl font-bold mb-6 text-primary">
+        KAACIB Dashboard
       </h2>
-      
-      <div style={{ marginBottom: '24px' }}>
-        <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px' }}>
+
+      <div className="mb-6">
+        <h3 className="text-lg font-semibold mb-4">
           Welcome to KAACIB Company Portal
         </h3>
-        <p style={{ color: '#666', fontSize: '14px' }}>
+        <p className="text-gray-600 text-sm">
           Manage your company assets, branches, and operations efficiently.
         </p>
       </div>
 
       {/* Quick Stats */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', 
-        gap: '16px',
-        marginBottom: '24px'
-      }}>
-        <div style={{ 
-          padding: '20px', 
-          borderRadius: '8px', 
-          border: '1px solid #f0f0f0',
-          background: 'white',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1890ff' }}>12</div>
-          <div style={{ fontSize: '14px', color: '#666' }}>Total Branches</div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="card-kaacib p-5">
+          <div className="text-2xl font-bold text-kaacib-primary">12</div>
+          <div className="text-sm text-gray-600">Total Branches</div>
         </div>
-        <div style={{ 
-          padding: '20px', 
-          borderRadius: '8px', 
-          border: '1px solid #f0f0f0',
-          background: 'white',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#52c41a' }}>45</div>
-          <div style={{ fontSize: '14px', color: '#666' }}>Active Assets</div>
+        <div className="card-kaacib p-5">
+          <div className="text-2xl font-bold text-kaacib-secondary">45</div>
+          <div className="text-sm text-gray-600">Active Assets</div>
         </div>
-        <div style={{ 
-          padding: '20px', 
-          borderRadius: '8px', 
-          border: '1px solid #f0f0f0',
-          background: 'white',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#faad14' }}>8</div>
-          <div style={{ fontSize: '14px', color: '#666' }}>Pending Bookings</div>
+        <div className="card-kaacib p-5">
+          <div className="text-2xl font-bold text-kaacib-primary">8</div>
+          <div className="text-sm text-gray-600">Pending Bookings</div>
         </div>
-        <div style={{ 
-          padding: '20px', 
-          borderRadius: '8px', 
-          border: '1px solid #f0f0f0',
-          background: 'white',
-          boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-        }}>
-          <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#722ed1' }}>3</div>
-          <div style={{ fontSize: '14px', color: '#666' }}>Service Requests</div>
+        <div className="card-kaacib p-5">
+          <div className="text-2xl font-bold text-kaacib-secondary">3</div>
+          <div className="text-sm text-gray-600">Service Requests</div>
         </div>
       </div>
 
-      {/* Auth Demo Component */}
-      <AuthDemo />
     </div>
   );
 }

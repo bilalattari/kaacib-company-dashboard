@@ -147,8 +147,8 @@ export default function Assets() {
       dataIndex: 'name',
       render: (text, record) => (
         <div>
-          <div style={{ fontWeight: 600, color: '#1890ff' }}>{text}</div>
-          <div style={{ fontSize: '12px', color: '#666' }}>
+          <div className="font-semibold text-kaacib-primary">{text}</div>
+          <div className="text-xs text-gray-600">
             {getTypeIcon(record.asset_type)} {record.asset_type?.toUpperCase()}
           </div>
         </div>
@@ -160,7 +160,7 @@ export default function Assets() {
       render: (status) => (
         <Badge 
           status={getStatusColor(status)} 
-          text={<span style={{ textTransform: 'capitalize' }}>{status}</span>} 
+          text={<span className="capitalize">{status}</span>} 
         />
       )
     },
@@ -171,7 +171,7 @@ export default function Assets() {
         <div>
           <div>{loc?.address || '-'}</div>
           {loc?.coordinates && (
-            <div style={{ fontSize: '12px', color: '#666' }}>
+            <div className="text-xs text-gray-600">
               📍 {loc.coordinates.lat?.toFixed(4)}, {loc.coordinates.lng?.toFixed(4)}
             </div>
           )}
@@ -251,63 +251,63 @@ export default function Assets() {
   };
 
   return (
-    <div style={{ padding: '24px', background: '#f5f5f5', minHeight: '100vh' }}>
+    <div className="p-6 bg-gray-50 min-h-screen">
       {/* Header Section */}
-      <div style={{ marginBottom: '24px' }}>
-        <Typography.Title level={2} style={{ margin: 0, color: '#1890ff' }}>
+      <div className="mb-6">
+        <Typography.Title level={2} className="m-0 text-kaacib-primary">
           Asset Management
         </Typography.Title>
-        <Typography.Text type="secondary">
+        <Typography.Text type="secondary" className="text-base">
           Manage and track your company assets efficiently
         </Typography.Text>
       </div>
 
       {/* Statistics Cards */}
-      <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
+      <Row gutter={[16, 16]} className="mb-6">
         <Col xs={24} sm={12} md={6}>
-          <Card>
+          <Card className="card-kaacib">
             <Statistic
               title="Total Assets"
               value={stats.total}
               prefix="📦"
-              valueStyle={{ color: '#1890ff' }}
+              valueStyle={{ color: '#133260' }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card>
+          <Card className="card-kaacib">
             <Statistic
               title="Active Assets"
               value={stats.active}
               prefix="✅"
-              valueStyle={{ color: '#52c41a' }}
+              valueStyle={{ color: '#FF3605' }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card>
+          <Card className="card-kaacib">
             <Statistic
               title="Under Maintenance"
               value={stats.maintenance}
               prefix="🔧"
-              valueStyle={{ color: '#faad14' }}
+              valueStyle={{ color: '#133260' }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={12} md={6}>
-          <Card>
+          <Card className="card-kaacib">
             <Statistic
               title="Retired Assets"
               value={stats.retired}
               prefix="🏁"
-              valueStyle={{ color: '#ff4d4f' }}
+              valueStyle={{ color: '#FF3605' }}
             />
           </Card>
         </Col>
       </Row>
 
       {/* Filters and Actions */}
-      <Card style={{ marginBottom: '16px' }}>
+      <Card className="card-kaacib mb-4">
         <Row gutter={[16, 16]} align="middle">
           <Col xs={24} sm={12} md={8}>
             <Input.Search
@@ -316,7 +316,7 @@ export default function Assets() {
               size="large"
               prefix={<SearchOutlined />}
               onSearch={(v) => dispatch(setAssetFilters({ search: v }))}
-              style={{ width: '100%' }}
+              className="w-full"
             />
           </Col>
           <Col xs={24} sm={6} md={4}>
@@ -324,7 +324,7 @@ export default function Assets() {
               placeholder="Filter by Type"
               allowClear
               size="large"
-              style={{ width: '100%' }}
+              className="w-full"
               onChange={(v) => dispatch(setAssetFilters({ asset_type: v || '' }))}
             >
               <Select.Option value="equipment">🔧 Equipment</Select.Option>
@@ -340,7 +340,7 @@ export default function Assets() {
               placeholder="Filter by Status"
               allowClear
               size="large"
-              style={{ width: '100%' }}
+              className="w-full"
               onChange={(v) => dispatch(setAssetFilters({ status: v || '' }))}
             >
               <Select.Option value="active">✅ Active</Select.Option>
@@ -375,7 +375,7 @@ export default function Assets() {
       </Card>
 
       {/* Assets Table */}
-      <Card>
+      <Card className="card-kaacib">
         <Table 
           rowKey="_id" 
           loading={loading} 
