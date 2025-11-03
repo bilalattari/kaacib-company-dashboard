@@ -8,9 +8,11 @@ import { login } from '../../redux/slices/authSlice';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import ThemedButton from '@/components/ThemedButton';
+import { Eye, EyeClosed } from 'lucide-react';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
+  const [visible, setVisible] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -38,6 +40,10 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleVisibility = () => {
+    setVisible((prev) => !prev);
   };
 
   return (
@@ -71,12 +77,26 @@ const Login = () => {
             >
               Password
             </label>
-            <input
-              type="password"
-              id="password"
-              {...register('password')}
-              className="w-full border-2 theme-border rounded-md py-1 px-2 focus:outline-none"
-            />
+            <div className="flex-content-center w-full border-2 theme-border rounded-md py-1 px-2 ">
+              <input
+                type={visible ? 'text' : 'password'}
+                id="password"
+                autoComplete="new-password"
+                className="focus:outline-none"
+                {...register('password')}
+              />
+              {visible ? (
+                <Eye
+                  onClick={toggleVisibility}
+                  className="theme-text cursor-pointer"
+                />
+              ) : (
+                <EyeClosed
+                  onClick={toggleVisibility}
+                  className="theme-text cursor-pointer"
+                />
+              )}
+            </div>
             {errors.password && (
               <p className="text-red-500">{errors.password.message}</p>
             )}
