@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Menu } from 'antd';
 import {
   ChevronLeft,
@@ -10,7 +10,6 @@ import {
   Users,
   Wrench,
 } from 'lucide-react';
-import './index.css';
 
 const items = [
   {
@@ -48,6 +47,7 @@ const items = [
 const ThemedSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const toggleCollapsed = () => {
     setCollapsed(!collapsed);
@@ -75,13 +75,18 @@ const ThemedSidebar = () => {
 
       <div onClick={toggleCollapsed} className=" h-12 bg-white"></div>
 
-      <Menu className="theme-bg w-full h-full" inlineCollapsed={collapsed}>
+      <Menu
+        className="theme-bg w-full h-full"
+        inlineCollapsed={collapsed}
+        selectedKeys={[location.pathname]}
+        mode="inline"
+      >
         {items.map((item, i) => (
           <Menu.Item
-            key={i}
+            key={item.path}
             icon={item.icon}
             onClick={() => navigate(item.path)}
-            className="flex items-center justify-between text-white! mb-2! hover:bg-white/90! hover:text-black! hover:shadow-md! hover:translate-y-1  transition-all duration-300"
+            className="flex items-center justify-between text-white! mb-2! hover:bg-white/90! hover:text-black! hover:shadow-md! hover:translate-y-1 [&.ant-menu-item-selected]:bg-white/90! [&.ant-menu-item-selected]:text-black! [&.ant-menu-item-selected]:shadow-md! [&.ant-menu-item-selected]:translate-y-1! transition-all duration-300"
           >
             <span className="text-md">{item.label}</span>
           </Menu.Item>

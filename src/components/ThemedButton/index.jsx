@@ -5,7 +5,7 @@ const ThemedButton = ({ text, icon, loading, className, ...props }) => {
   return (
     <button
       className={cn(
-        'w-full flex-content-center theme-bg rounded-md text-white cursor-pointer focus:outline-none',
+        'flex-content-center theme-bg rounded-md text-white p-2 cursor-pointer focus:outline-none',
         className,
       )}
       disabled={loading}
