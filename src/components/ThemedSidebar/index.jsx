@@ -9,6 +9,7 @@ import {
   TicketsIcon,
   Users,
   Wrench,
+  Calendar,
 } from 'lucide-react';
 
 const items = [
@@ -41,6 +42,11 @@ const items = [
     icon: <Users className="size-5" />,
     label: 'Users',
     path: '/users',
+  },
+  {
+    icon: <Calendar className="size-5" />,
+    label: 'Bookings',
+    path: '/bookings',
   },
 ];
 
