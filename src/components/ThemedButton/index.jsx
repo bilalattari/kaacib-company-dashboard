@@ -24,5 +24,4 @@ const ThemedButton = ({ text, icon, loading, className, ...props }) => {
     </button>
   );
 };
-
 export default ThemedButton;
