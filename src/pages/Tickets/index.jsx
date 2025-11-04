@@ -6,6 +6,9 @@ import {
   approveRejectQuotation,
   completeTicket,
   addTicketNote,
+  getCompanyInfo,
+  getBranches,
+  getAssets,
 } from '../../apis';
 import {
   Divider,
@@ -32,24 +35,57 @@ import {
 import ThemedTable from '../../components/ThemedTable';
 import ThemedButton from '../../components/ThemedButton';
 import { format, parseISO } from 'date-fns';
-import { PlusCircle, Eye, Check, X, MessageSquare, FileCheck } from 'lucide-react';
+import {
+  PlusCircle,
+  Eye,
+  Check,
+  X,
+  MessageSquare,
+  FileCheck,
+} from 'lucide-react';
 
 const { TextArea } = Input;
 const { Option } = Select;
 
 const Tickets = () => {
+  const [data, setData] = useState([]);
+  const [contract, setContract] = useState({});
+  const [branches, setBranches] = useState([]);
+  const [assets, setAssets] = useState([]);
+  const [services, setServices] = useState([]);
+
   const [loading, setLoading] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [detailDrawerVisible, setDetailDrawerVisible] = useState(false);
   const [quotationModalVisible, setQuotationModalVisible] = useState(false);
   const [completeModalVisible, setCompleteModalVisible] = useState(false);
   const [noteModalVisible, setNoteModalVisible] = useState(false);
-  const [data, setData] = useState([]);
   const [selectedTicket, setSelectedTicket] = useState(null);
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    setValue,
+    watch,
+    reset,
+  } = useForm({
+    resolver: zodResolver(createTicketSchema),
+    defaultValues: {
+      priority: 'normal',
+    },
+  });
 
   useEffect(() => {
     fetchTickets();
+    fetchInfo();
+    fetchBranches();
+    fetchAssets();
   }, [pagination.current, pagination.pageSize]);
 
   const fetchTickets = async () => {
@@ -71,12 +107,243 @@ const Tickets = () => {
     }
   };
 
+  const fetchInfo = async () => {
+    try {
+      const { data } = await getCompanyInfo();
+      setContract(data?.data?.contracts[0] || {});
+      setServices(data?.data?.contracts[0]?.services || []);
+    } catch (err) {
+      console.error('Error fetching company details =>', err);
+      message.error(err.response?.data?.message || 'Something went wrong.');
+    }
+  };
+
+  const fetchBranches = async () => {
+    try {
+      const { data } = await getBranches();
+      setBranches(data?.data?.branches || []);
+    } catch (err) {
+      console.error('Error fetching branches =>', err);
+      message.error(err.response?.data?.message || 'Something went wrong.');
+    }
+  };
+
+  const fetchAssets = async () => {
+    try {
+      const { data } = await getAssets();
+      setAssets(data?.data?.assets || []);
+    } catch (err) {
+      console.error('Error fetching assets =>', err);
+      message.error(err.response?.data?.message || 'Something went wrong.');
+    }
+  };
+
   const fetchTicketDetails = async (id) => {
     try {
       setLoading(true);
       const { data } = await getTicketById(id);
       setSelectedTicket(data?.data?.ticket);
       setDetailDrawerVisible(true);
+    } catch (err) {
+      message.error(err.response?.data?.message || 'Something went wrong.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Approve/Reject Quotation Form
+  const QuotationForm = () => {
+    const {
+      register,
+      handleSubmit,
+      formState: { errors },
+      setValue,
+      watch,
+    } = useForm({
+      resolver: zodResolver(approveRejectQuotationSchema),
+      defaultValues: {
+        action: 'approve',
+      },
+    });
+
+    const onSubmit = async (values) => {
+      try {
+        setLoading(true);
+        await approveRejectQuotation(selectedTicket?.id, values);
+        message.success(
+          `Quotation ${
+            values.action === 'approve' ? 'approved' : 'rejected'
+          } successfully`,
+        );
+        setQuotationModalVisible(false);
+        fetchTicketDetails(selectedTicket?.id);
+      } catch (err) {
+        message.error(err.response?.data?.message || 'Something went wrong.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const action = watch('action');
+
+    return (
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <div>
+          <label className="theme-text font-semibold">Action *</label>
+          <Select
+            value={watch('action')}
+            onChange={(value) => setValue('action', value)}
+            className="w-full mt-1"
+          >
+            <Option value="approve">Approve</Option>
+            <Option value="reject">Reject</Option>
+          </Select>
+        </div>
+
+        {action === 'reject' && (
+          <div>
+            <label className="theme-text font-semibold">
+              Rejection Reason *
+            </label>
+            <TextArea
+              {...register('rejection_reason')}
+              placeholder="Enter rejection reason (min 10, max 500 characters)"
+              rows={4}
+              className="mt-1"
+            />
+            {errors.rejection_reason && (
+              <p className="text-red-500 text-sm mt-1">
+                {errors.rejection_reason.message}
+              </p>
+            )}
+          </div>
+        )}
+
+        <ThemedButton
+          type="submit"
+          text={action === 'approve' ? 'Approve Quotation' : 'Reject Quotation'}
+          loading={loading}
+          className="mt-2"
+        />
+      </form>
+    );
+  };
+
+  // Complete Ticket Form
+  const CompleteTicketForm = () => {
+    const {
+      register,
+      handleSubmit,
+      formState: { errors },
+    } = useForm({
+      resolver: zodResolver(completeTicketSchema),
+    });
+
+    return (
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <div>
+          <label className="theme-text font-semibold">
+            Completion Notes (Optional)
+          </label>
+          <TextArea
+            {...register('notes')}
+            placeholder="Enter completion notes (max 500 characters)"
+            rows={4}
+            className="mt-1"
+          />
+          {errors.notes && (
+            <p className="text-red-500 text-sm mt-1">{errors.notes.message}</p>
+          )}
+        </div>
+
+        <ThemedButton
+          type="submit"
+          text="Complete Ticket"
+          loading={loading}
+          className="mt-2"
+        />
+      </form>
+    );
+  };
+
+  // Add Note Form
+  const AddNoteForm = () => {
+    const {
+      register,
+      handleSubmit,
+      formState: { errors },
+    } = useForm({
+      resolver: zodResolver(addTicketNoteSchema),
+    });
+
+    const onSubmit = async (values) => {
+      try {
+        setLoading(true);
+        await addTicketNote(selectedTicket?.id, values);
+        message.success('Note added successfully');
+        setNoteModalVisible(false);
+        fetchTicketDetails(selectedTicket?.id);
+      } catch (err) {
+        message.error(err.response?.data?.message || 'Something went wrong.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    return (
+      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+        <div>
+          <label className="theme-text font-semibold">Note Text *</label>
+          <TextArea
+            {...register('text')}
+            placeholder="Enter note text (max 500 characters)"
+            rows={4}
+            className="mt-1"
+          />
+          {errors.text && (
+            <p className="text-red-500 text-sm mt-1">{errors.text.message}</p>
+          )}
+        </div>
+
+        <ThemedButton
+          type="submit"
+          text="Add Note"
+          loading={loading}
+          className="mt-2"
+        />
+      </form>
+    );
+  };
+
+  // Create Ticket Submit Handler
+  const onCreateTicket = async (values) => {
+    try {
+      setLoading(true);
+      const data = {
+        ...values,
+        contract_id: contract._id,
+      };
+      await createTicket(data);
+      message.success('Ticket created successfully');
+      reset();
+      setDrawerVisible(false);
+      fetchTickets();
+    } catch (err) {
+      message.error(err.response?.data?.message || 'Something went wrong.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Complete Ticket Form
+  const onSubmit = async (values) => {
+    try {
+      setLoading(true);
+      await completeTicket(selectedTicket?.id, values);
+      message.success('Ticket completed successfully');
+      setCompleteModalVisible(false);
+      fetchTicketDetails(selectedTicket?.id);
+      fetchTickets();
     } catch (err) {
       message.error(err.response?.data?.message || 'Something went wrong.');
     } finally {
@@ -107,8 +374,18 @@ const Tickets = () => {
           red: 'red',
           yellow: 'gold',
           normal: 'green',
+          medium: 'gold',
+          high: 'red',
         };
-        return <Tag color={colors[priority] || 'default'}>{priority}</Tag>;
+        return (
+          <Tag className="capitalize" color={colors[priority] || 'default'}>
+            {priority === 'red'
+              ? 'High'
+              : priority === 'yellow'
+              ? 'Medium'
+              : priority}
+          </Tag>
+        );
       },
     },
     {
@@ -124,7 +401,9 @@ const Tickets = () => {
             : status === 'quotation_pending'
             ? 'orange'
             : 'volcano';
-        return <Tag color={color}>{status.toUpperCase().replace('_', ' ')}</Tag>;
+        return (
+          <Tag color={color}>{status.toUpperCase().replace('_', ' ')}</Tag>
+        );
       },
     },
     {
@@ -195,278 +474,6 @@ const Tickets = () => {
     },
   ];
 
-  // Create Ticket Form
-  const CreateTicketForm = () => {
-    const {
-      register,
-      handleSubmit,
-      formState: { errors },
-      setValue,
-      watch,
-    } = useForm({
-      resolver: zodResolver(createTicketSchema),
-      defaultValues: {
-        priority: 'normal',
-      },
-    });
-
-    const onSubmit = async (values) => {
-      try {
-        setLoading(true);
-        await createTicket(values);
-        message.success('Ticket created successfully');
-        setDrawerVisible(false);
-        fetchTickets();
-      } catch (err) {
-        message.error(err.response?.data?.message || 'Something went wrong.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    return (
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <div>
-          <label className="theme-text font-semibold">Contract ID *</label>
-          <Input
-            {...register('contract_id')}
-            placeholder="Enter contract ID"
-            className="mt-1"
-          />
-          {errors.contract_id && (
-            <p className="text-red-500 text-sm mt-1">{errors.contract_id.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="theme-text font-semibold">Service ID *</label>
-          <Input
-            {...register('service_id')}
-            placeholder="Enter service ID"
-            className="mt-1"
-          />
-          {errors.service_id && (
-            <p className="text-red-500 text-sm mt-1">{errors.service_id.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="theme-text font-semibold">Description *</label>
-          <TextArea
-            {...register('description')}
-            placeholder="Enter description (min 10, max 1000 characters)"
-            rows={4}
-            className="mt-1"
-          />
-          {errors.description && (
-            <p className="text-red-500 text-sm mt-1">{errors.description.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="theme-text font-semibold">Priority</label>
-          <Select
-            value={watch('priority')}
-            onChange={(value) => setValue('priority', value)}
-            className="w-full mt-1"
-          >
-            <Option value="normal">Normal</Option>
-            <Option value="yellow">Yellow</Option>
-            <Option value="red">Red</Option>
-          </Select>
-        </div>
-
-        <div>
-          <label className="theme-text font-semibold">Branch ID (Optional)</label>
-          <Input
-            {...register('branch_id')}
-            placeholder="Enter branch ID (optional)"
-            className="mt-1"
-          />
-        </div>
-
-        <div>
-          <label className="theme-text font-semibold">Asset ID (Optional)</label>
-          <Input
-            {...register('asset_id')}
-            placeholder="Enter asset ID (optional)"
-            className="mt-1"
-          />
-        </div>
-
-        <ThemedButton
-          type="submit"
-          text="Create Ticket"
-          loading={loading}
-          className="mt-2"
-        />
-      </form>
-    );
-  };
-
-  // Approve/Reject Quotation Form
-  const QuotationForm = () => {
-    const {
-      register,
-      handleSubmit,
-      formState: { errors },
-      setValue,
-      watch,
-    } = useForm({
-      resolver: zodResolver(approveRejectQuotationSchema),
-      defaultValues: {
-        action: 'approve',
-      },
-    });
-
-    const onSubmit = async (values) => {
-      try {
-        setLoading(true);
-        await approveRejectQuotation(selectedTicket?.id, values);
-        message.success(
-          `Quotation ${values.action === 'approve' ? 'approved' : 'rejected'} successfully`
-        );
-        setQuotationModalVisible(false);
-        fetchTicketDetails(selectedTicket?.id);
-      } catch (err) {
-        message.error(err.response?.data?.message || 'Something went wrong.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const action = watch('action');
-
-    return (
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <div>
-          <label className="theme-text font-semibold">Action *</label>
-          <Select
-            value={watch('action')}
-            onChange={(value) => setValue('action', value)}
-            className="w-full mt-1"
-          >
-            <Option value="approve">Approve</Option>
-            <Option value="reject">Reject</Option>
-          </Select>
-        </div>
-
-        {action === 'reject' && (
-          <div>
-            <label className="theme-text font-semibold">Rejection Reason *</label>
-            <TextArea
-              {...register('rejection_reason')}
-              placeholder="Enter rejection reason (min 10, max 500 characters)"
-              rows={4}
-              className="mt-1"
-            />
-            {errors.rejection_reason && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.rejection_reason.message}
-              </p>
-            )}
-          </div>
-        )}
-
-        <ThemedButton
-          type="submit"
-          text={action === 'approve' ? 'Approve Quotation' : 'Reject Quotation'}
-          loading={loading}
-          className="mt-2"
-        />
-      </form>
-    );
-  };
-
-  // Complete Ticket Form
-  const CompleteTicketForm = () => {
-    const {
-      register,
-      handleSubmit,
-      formState: { errors },
-    } = useForm({
-      resolver: zodResolver(completeTicketSchema),
-    });
-
-    const onSubmit = async (values) => {
-      try {
-        setLoading(true);
-        await completeTicket(selectedTicket?.id, values);
-        message.success('Ticket completed successfully');
-        setCompleteModalVisible(false);
-        fetchTicketDetails(selectedTicket?.id);
-        fetchTickets();
-      } catch (err) {
-        message.error(err.response?.data?.message || 'Something went wrong.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    return (
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <div>
-          <label className="theme-text font-semibold">Completion Notes (Optional)</label>
-          <TextArea
-            {...register('notes')}
-            placeholder="Enter completion notes (max 500 characters)"
-            rows={4}
-            className="mt-1"
-          />
-          {errors.notes && (
-            <p className="text-red-500 text-sm mt-1">{errors.notes.message}</p>
-          )}
-        </div>
-
-        <ThemedButton type="submit" text="Complete Ticket" loading={loading} className="mt-2" />
-      </form>
-    );
-  };
-
-  // Add Note Form
-  const AddNoteForm = () => {
-    const {
-      register,
-      handleSubmit,
-      formState: { errors },
-    } = useForm({
-      resolver: zodResolver(addTicketNoteSchema),
-    });
-
-    const onSubmit = async (values) => {
-      try {
-        setLoading(true);
-        await addTicketNote(selectedTicket?.id, values);
-        message.success('Note added successfully');
-        setNoteModalVisible(false);
-        fetchTicketDetails(selectedTicket?.id);
-      } catch (err) {
-        message.error(err.response?.data?.message || 'Something went wrong.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    return (
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <div>
-          <label className="theme-text font-semibold">Note Text *</label>
-          <TextArea
-            {...register('text')}
-            placeholder="Enter note text (max 500 characters)"
-            rows={4}
-            className="mt-1"
-          />
-          {errors.text && (
-            <p className="text-red-500 text-sm mt-1">{errors.text.message}</p>
-          )}
-        </div>
-
-        <ThemedButton type="submit" text="Add Note" loading={loading} className="mt-2" />
-      </form>
-    );
-  };
-
   return (
     <div className="w-full h-full px-4">
       <div className="w-full flex-content-right py-4">
@@ -499,9 +506,139 @@ const Tickets = () => {
         title="Create Ticket"
         open={drawerVisible}
         onClose={() => setDrawerVisible(false)}
-        width={500}
+        width={800}
       >
-        <CreateTicketForm />
+        <form
+          onSubmit={handleSubmit(onCreateTicket)}
+          className="flex flex-col gap-4"
+        >
+          <div className="mb-4">
+            <h2 className="text-xl font-bold">
+              <span className="theme-text">Contract : </span>
+              <span className="text-gray-800 text-lg">
+                {contract?.title || 'N/A'}
+              </span>
+            </h2>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label
+              htmlFor="branch_id"
+              className="theme-text text-xl font-semibold"
+            >
+              Branch
+            </label>
+            <Select
+              value={watch('branch_id')}
+              onChange={(value) => setValue('branch_id', value)}
+              className="w-full mt-1"
+              placeholder="Select Branch"
+            >
+              {branches.map((branch) => (
+                <Option key={branch._id} value={branch._id}>
+                  {branch.name}
+                </Option>
+              ))}
+            </Select>
+            {errors.branch_id && (
+              <p className="text-red-500">{errors.branch_id.message}</p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label
+              htmlFor="asset_id"
+              className="theme-text text-xl font-semibold"
+            >
+              Asset
+            </label>
+            <Select
+              value={watch('asset_id')}
+              onChange={(value) => setValue('asset_id', value)}
+              className="w-full mt-1"
+              placeholder="Select Asset"
+            >
+              {assets.map((asset) => (
+                <Option key={asset._id} value={asset._id}>
+                  {asset.name}
+                </Option>
+              ))}
+            </Select>
+            {errors.asset_id && (
+              <p className="text-red-500">{errors.asset_id.message}</p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label
+              htmlFor="service_id"
+              className="theme-text text-xl font-semibold"
+            >
+              Service
+            </label>
+            <Select
+              value={watch('service_id')}
+              onChange={(value) => setValue('service_id', value)}
+              className="w-full mt-1"
+              placeholder="Select Service"
+            >
+              {services.map((service) => (
+                <Option key={service._id} value={service._id}>
+                  {service.title.en}
+                </Option>
+              ))}
+            </Select>
+            {errors.service_id && (
+              <p className="text-red-500">{errors.service_id.message}</p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label
+              htmlFor="description"
+              className="theme-text text-xl font-semibold"
+            >
+              Description
+            </label>
+            <input
+              {...register('description')}
+              placeholder="Enter ticket description"
+              className="mt-1 w-full h-20 border-2 border-gray-300 p-2 rounded-md focus:outline-none"
+            />
+            {errors.description && (
+              <p className="text-red-500">{errors.description.message}</p>
+            )}
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label
+              htmlFor="priority"
+              className="theme-text text-xl font-semibold"
+            >
+              Priority
+            </label>
+            <Select
+              value={watch('priority')}
+              onChange={(value) => setValue('priority', value)}
+              className="w-full mt-1"
+              placeholder="Select Priority"
+            >
+              <Option value="normal">Normal</Option>
+              <Option value="medium">Medium</Option>
+              <Option value="high">High</Option>
+            </Select>
+            {errors.priority && (
+              <p className="text-red-500">{errors.priority.message}</p>
+            )}
+          </div>
+
+          <ThemedButton
+            type="submit"
+            text="Create"
+            className="p-2 font-semibold text-xl"
+            loading={loading}
+          />
+        </form>
       </Drawer>
 
       {/* Ticket Details Drawer */}
@@ -554,7 +691,8 @@ const Tickets = () => {
               <Descriptions.Item label="Status">
                 <Tag
                   color={
-                    selectedTicket.status === 'completed' || selectedTicket.status === 'closed'
+                    selectedTicket.status === 'completed' ||
+                    selectedTicket.status === 'closed'
                       ? 'green'
                       : selectedTicket.status === 'quotation_pending'
                       ? 'orange'
@@ -582,21 +720,30 @@ const Tickets = () => {
                 {selectedTicket.asset?.name || '—'}
               </Descriptions.Item>
               <Descriptions.Item label="Service">
-                {selectedTicket.service?.name || selectedTicket.service?.title?.en || '—'}
+                {selectedTicket.service?.name ||
+                  selectedTicket.service?.title?.en ||
+                  '—'}
               </Descriptions.Item>
               <Descriptions.Item label="Worker">
-                {selectedTicket.worker?.first_name && selectedTicket.worker?.last_name
+                {selectedTicket.worker?.first_name &&
+                selectedTicket.worker?.last_name
                   ? `${selectedTicket.worker.first_name} ${selectedTicket.worker.last_name}`
                   : '—'}
               </Descriptions.Item>
               <Descriptions.Item label="Created At">
                 {selectedTicket.created_at
-                  ? format(parseISO(selectedTicket.created_at), 'dd MMM, yyyy hh:mm a')
+                  ? format(
+                      parseISO(selectedTicket.created_at),
+                      'dd MMM, yyyy hh:mm a',
+                    )
                   : '—'}
               </Descriptions.Item>
               {selectedTicket.completed_at && (
                 <Descriptions.Item label="Completed At">
-                  {format(parseISO(selectedTicket.completed_at), 'dd MMM, yyyy hh:mm a')}
+                  {format(
+                    parseISO(selectedTicket.completed_at),
+                    'dd MMM, yyyy hh:mm a',
+                  )}
                 </Descriptions.Item>
               )}
             </Descriptions>
@@ -605,13 +752,17 @@ const Tickets = () => {
               <Card title="Quotation Details" className="mt-4">
                 <Descriptions bordered column={1} size="small">
                   <Descriptions.Item label="Materials Cost">
-                    Rs {selectedTicket.quotation.materials_cost?.toLocaleString() || 0}
+                    Rs{' '}
+                    {selectedTicket.quotation.materials_cost?.toLocaleString() ||
+                      0}
                   </Descriptions.Item>
                   <Descriptions.Item label="Labor Cost">
-                    Rs {selectedTicket.quotation.labor_cost?.toLocaleString() || 0}
+                    Rs{' '}
+                    {selectedTicket.quotation.labor_cost?.toLocaleString() || 0}
                   </Descriptions.Item>
                   <Descriptions.Item label="Total Cost">
-                    Rs {selectedTicket.quotation.total_cost?.toLocaleString() || 0}
+                    Rs{' '}
+                    {selectedTicket.quotation.total_cost?.toLocaleString() || 0}
                   </Descriptions.Item>
                   <Descriptions.Item label="Status">
                     <Tag
@@ -642,7 +793,10 @@ const Tickets = () => {
                       <p className="text-sm">{note.text}</p>
                       <p className="text-xs text-gray-500 mt-1">
                         {note.created_at
-                          ? format(parseISO(note.created_at), 'dd MMM, yyyy hh:mm a')
+                          ? format(
+                              parseISO(note.created_at),
+                              'dd MMM, yyyy hh:mm a',
+                            )
                           : ''}
                       </p>
                     </div>

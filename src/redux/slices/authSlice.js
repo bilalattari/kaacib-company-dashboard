@@ -23,7 +23,7 @@ export const authSlice = createSlice({
       state.status = 'succeeded';
       state.user = user;
       state.token = token;
-      setAuthToken(JSON.stringify({ user, token }));
+      setAuthToken({ user, token });
     },
     logOut: (state) => {
       state.status = 'idle';

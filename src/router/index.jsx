@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { login, logOut, selectUser } from '@/redux/slices/authSlice';
-import { getAuthToken } from '@/helpers';
+import { getUserData } from '@/helpers';
 import ProtectRoute from './ProtectedRoute';
 import AppLayout from '@/pages/Layout';
 import Login from '@/pages/Login';
@@ -19,11 +19,11 @@ const AppRouter = () => {
   const user = useSelector(selectUser);
 
   useEffect(() => {
-    const userToken = getAuthToken();
+    const userData = getUserData();
 
-    if (!user && userToken) {
-      dispatch(login(JSON.parse(userToken)));
-    } else if (!userToken) {
+    if (!user && userData) {
+      dispatch(login(userData));
+    } else if (!userData) {
       dispatch(logOut());
     }
   }, [dispatch]);

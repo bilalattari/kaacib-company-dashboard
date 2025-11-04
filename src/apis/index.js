@@ -1,4 +1,5 @@
 import axiosInstance from '@/apis/axios';
+import { getUserData } from '../helpers';
 
 // ==================== Authentication APIs ====================
 const loginUser = async (data) => {
@@ -9,16 +10,24 @@ const loginUser = async (data) => {
 };
 
 const forgotPassword = async (data) => {
-  const response = await axiosInstance.post('/auth/company/forgot-password', data, {
-    isToken: false,
-  });
+  const response = await axiosInstance.post(
+    '/auth/company/forgot-password',
+    data,
+    {
+      isToken: false,
+    },
+  );
   return response;
 };
 
 const resetPassword = async (data) => {
-  const response = await axiosInstance.post('/auth/company/reset-password', data, {
-    isToken: false,
-  });
+  const response = await axiosInstance.post(
+    '/auth/company/reset-password',
+    data,
+    {
+      isToken: false,
+    },
+  );
   return response;
 };
 
@@ -45,17 +54,26 @@ const getTicketById = async (id) => {
 };
 
 const approveRejectQuotation = async (id, data) => {
-  const response = await axiosInstance.put(`/company/tickets/${id}/quotation/approve`, data);
+  const response = await axiosInstance.put(
+    `/company/tickets/${id}/quotation/approve`,
+    data,
+  );
   return response;
 };
 
 const completeTicket = async (id, data = {}) => {
-  const response = await axiosInstance.post(`/company/tickets/${id}/complete`, data);
+  const response = await axiosInstance.post(
+    `/company/tickets/${id}/complete`,
+    data,
+  );
   return response;
 };
 
 const addTicketNote = async (id, data) => {
-  const response = await axiosInstance.post(`/company/tickets/${id}/notes`, data);
+  const response = await axiosInstance.post(
+    `/company/tickets/${id}/notes`,
+    data,
+  );
   return response;
 };
 
@@ -122,12 +140,17 @@ const deleteAsset = async (id) => {
 };
 
 const getAssetServiceHistory = async (id) => {
-  const response = await axiosInstance.get(`/company/assets/${id}/service-history`);
+  const response = await axiosInstance.get(
+    `/company/assets/${id}/service-history`,
+  );
   return response;
 };
 
 const createAssetServiceRequest = async (id, data) => {
-  const response = await axiosInstance.post(`/company/assets/${id}/service-request`, data);
+  const response = await axiosInstance.post(
+    `/company/assets/${id}/service-request`,
+    data,
+  );
   return response;
 };
 
@@ -184,7 +207,10 @@ const getBookingById = async (id) => {
 };
 
 const completeBooking = async (id, data) => {
-  const response = await axiosInstance.post(`/company/bookings/${id}/complete`, data);
+  const response = await axiosInstance.post(
+    `/company/bookings/${id}/complete`,
+    data,
+  );
   return response;
 };
 
@@ -201,6 +227,18 @@ const getBookingWorker = async (id) => {
 // ==================== Workers APIs ====================
 const getWorkers = async () => {
   const response = await axiosInstance.get('/company/workers');
+  return response;
+};
+
+// ==================== Contract Management APIs ====================
+const getContracts = async () => {
+  const userData = getUserData();
+  const response = await axiosInstance.get('/admin/contracts', {
+    params: { companyId: userData?.user?.company?._id },
+  });
+
+  console.log('Contracts response:', response);
+
   return response;
 };
 
@@ -251,4 +289,6 @@ export {
   getBookingWorker,
   // Workers
   getWorkers,
+  //Contracts
+  getContracts,
 };

@@ -1,18 +1,27 @@
 const getAuthToken = () => {
-  const token = localStorage.getItem('user___token');
+  const userData = localStorage.getItem('user___token');
 
-  if (!token || token === 'undefined') {
+  if (!userData || userData === 'undefined') {
     return null;
   }
-  return token;
+  return JSON.parse(userData).token;
+};
+
+const getUserData = () => {
+  const userData = localStorage.getItem('user___token');
+
+  if (!userData || userData === 'undefined') {
+    return null;
+  }
+  return JSON.parse(userData);
 };
 
 const setAuthToken = (token) => {
-  localStorage.setItem('user___token', token);
+  localStorage.setItem('user___token', JSON.stringify(token));
 };
 
 const removeAuthToken = () => {
   localStorage.removeItem('user___token');
 };
 
-export { getAuthToken, setAuthToken, removeAuthToken };
+export { getAuthToken, getUserData, setAuthToken, removeAuthToken };

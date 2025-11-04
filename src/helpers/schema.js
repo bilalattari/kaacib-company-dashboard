@@ -17,19 +17,22 @@ export const resetPasswordSchema = z.object({
   newPassword: z
     .string('Password is required')
     .min(8, { message: 'Password must be at least 8 characters long' })
-    .regex(/[A-Z]/, { message: 'Password must contain at least one uppercase letter' })
-    .regex(/[a-z]/, { message: 'Password must contain at least one lowercase letter' })
+    .regex(/[A-Z]/, {
+      message: 'Password must contain at least one uppercase letter',
+    })
+    .regex(/[a-z]/, {
+      message: 'Password must contain at least one lowercase letter',
+    })
     .regex(/[0-9]/, { message: 'Password must contain at least one number' }),
 });
 
 export const createTicketSchema = z.object({
-  contract_id: z.string('Contract is required'),
   service_id: z.string('Service is required'),
   description: z
     .string('Description is required')
     .min(10, { message: 'Description must be at least 10 characters' })
     .max(1000, { message: 'Description must be at most 1000 characters' }),
-  priority: z.enum(['red', 'yellow', 'normal']).optional(),
+  priority: z.enum(['normal', 'medium', 'high']).optional(),
   branch_id: z.string().optional().nullable(),
   asset_id: z.string().optional().nullable(),
 });
@@ -40,7 +43,10 @@ export const approveRejectQuotationSchema = z.object({
 });
 
 export const completeTicketSchema = z.object({
-  notes: z.string().max(500, { message: 'Notes must be at most 500 characters' }).optional(),
+  notes: z
+    .string()
+    .max(500, { message: 'Notes must be at most 500 characters' })
+    .optional(),
 });
 
 export const addTicketNoteSchema = z.object({
@@ -70,7 +76,14 @@ export const createBranchSchema = z.object({
 export const createAssetSchema = z.object({
   branch_id: z.string().optional().nullable(),
   name: z.string('Name is required').min(2).max(100),
-  asset_type: z.enum(['equipment', 'vehicle', 'property', 'furniture', 'technology', 'other']),
+  asset_type: z.enum([
+    'equipment',
+    'vehicle',
+    'property',
+    'furniture',
+    'technology',
+    'other',
+  ]),
   description: z.string().optional(),
   serial_number: z.string().optional(),
   model_number: z.string().optional(),
@@ -117,8 +130,12 @@ export const changePasswordSchema = z.object({
   newPassword: z
     .string('New password is required')
     .min(8, { message: 'Password must be at least 8 characters long' })
-    .regex(/[A-Z]/, { message: 'Password must contain at least one uppercase letter' })
-    .regex(/[a-z]/, { message: 'Password must contain at least one lowercase letter' })
+    .regex(/[A-Z]/, {
+      message: 'Password must contain at least one uppercase letter',
+    })
+    .regex(/[a-z]/, {
+      message: 'Password must contain at least one lowercase letter',
+    })
     .regex(/[0-9]/, { message: 'Password must contain at least one number' }),
 });
 
