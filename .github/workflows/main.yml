@@ -1,0 +1,45 @@
+on:
+  push:
+    branches:
+      - main
+
+name: Deploy Kaacib on Cpanel
+
+jobs:
+  build:
+    runs-on: ubuntu-latest 
+    strategy:
+      matrix:
+        node-version: [20.x]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setting up the environment
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: "yarn"
+
+      - name: Installing dependencies
+        run: yarn install
+
+      - name: Create .env file
+        run: |
+          echo "VITE_BASE_URL=${{ secrets.VITE_BASE_URL }}" >> .env
+    
+      - name: Production build
+        run: yarn run build
+        env:
+          CI: ""
+          GENERATE_SOURCEMAP: false
+
+      - name: FTP deploy 
+        uses: SamKirkland/FTP-Deploy-Action@4.3.3
+        with:
+          log-level: verbose
+          security: strict
+          local-dir: dist/
+          server:  ftp.kaacib.com
+          username: b2b@kaacib.com
+          password: ${{ secrets.ftp_password }}
