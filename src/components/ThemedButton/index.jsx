@@ -1,11 +1,24 @@
 import { cn } from '@/lib/utils';
 import { LoaderCircle } from 'lucide-react';
 
-const ThemedButton = ({ text, icon, loading, className, ...props }) => {
+const ThemedButton = ({
+  text,
+  icon,
+  loading,
+  variant,
+  className,
+  ...props
+}) => {
+  let variantStyles = {
+    primary: 'theme-bg text-white',
+    outlined: 'theme-text',
+  };
+
   return (
     <button
       className={cn(
-        'flex-content-center theme-bg rounded-md text-white p-2 cursor-pointer focus:outline-none',
+        'flex-content-center p-2 rounded-md cursor-pointer focus:outline-none border-2 theme-border',
+        variantStyles[variant] || variantStyles['primary'],
         className,
       )}
       disabled={loading}
