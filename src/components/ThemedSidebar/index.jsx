@@ -10,7 +10,6 @@ import {
   PieChart,
   TicketsIcon,
   Users,
-  Wrench,
   Calendar,
   ArrowRightCircle,
 } from 'lucide-react';
@@ -26,11 +25,6 @@ const items = [
     icon: <TicketsIcon className="size-5" />,
     label: 'Tickets',
     path: '/tickets',
-  },
-  {
-    icon: <Wrench className="size-5" />,
-    label: 'Workers',
-    path: '/workers',
   },
   {
     icon: <GitForkIcon className="size-5" />,

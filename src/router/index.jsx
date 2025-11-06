@@ -10,7 +10,6 @@ import Dashboard from '@/pages/Dashboard';
 import Tickets from '../pages/Tickets';
 import Users from '../pages/Users';
 import Assets from '../pages/Assets';
-import Workers from '../pages/Workers';
 import Branches from '../pages/Branches';
 import Bookings from '../pages/Bookings';
 
@@ -45,7 +44,6 @@ const AppRouter = () => {
       >
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/tickets" element={<Tickets />} />
-        <Route path="/workers" element={<Workers />} />
         <Route path="/branches" element={<Branches />} />
         <Route path="/assets" element={<Assets />} />
         <Route path="/users" element={<Users />} />
