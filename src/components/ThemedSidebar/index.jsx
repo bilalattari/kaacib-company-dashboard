@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { logOut } from '@/redux/slices/authSlice';
 import { Menu } from 'antd';
 import {
   ChevronLeft,
@@ -10,7 +12,9 @@ import {
   Users,
   Wrench,
   Calendar,
+  ArrowRightCircle,
 } from 'lucide-react';
+import ThemedButton from '../ThemedButton';
 
 const items = [
   {
@@ -54,13 +58,19 @@ const ThemedSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
+  const dispatch = useDispatch();
 
   const toggleCollapsed = () => {
     setCollapsed(!collapsed);
   };
 
+  const handleLogout = () => {
+    dispatch(logOut());
+    navigate('/login');
+  };
+
   return (
-    <div className="theme-bg flex-content-center flex-col w-full h-full pt-4 gap-4 border-2 border-red-600 px-1">
+    <div className="theme-bg flex-content-center flex-col w-full h-full py-4 gap-16 px-2">
       <div
         onClick={toggleCollapsed}
         className={`${
@@ -79,8 +89,6 @@ const ThemedSidebar = () => {
         )}
       </div>
 
-      <div onClick={toggleCollapsed} className=" h-12 bg-white"></div>
-
       <Menu
         className="theme-bg w-full h-full"
         inlineCollapsed={collapsed}
@@ -98,6 +106,13 @@ const ThemedSidebar = () => {
           </Menu.Item>
         ))}
       </Menu>
+
+      <ThemedButton
+        text="Logout"
+        icon={<ArrowRightCircle />}
+        onClick={handleLogout}
+        className="w-full flex items-center justify-between text-white! mb-2! hover:bg-white/90! hover:text-black! hover:shadow-md! hover:translate-y-1 [&.ant-menu-item-selected]:bg-white/90! [&.ant-menu-item-selected]:text-black! [&.ant-menu-item-selected]:shadow-md! [&.ant-menu-item-selected]:translate-y-1! transition-all duration-300"
+      />
     </div>
   );
 };
