@@ -35,6 +35,7 @@ export const createTicketSchema = z.object({
   priority: z.enum(['normal', 'medium', 'high']).optional(),
   branch_id: z.string().optional().nullable(),
   asset_id: z.string().optional().nullable(),
+  scheduled_date: z.string('Date is required'),
 });
 
 export const approveRejectQuotationSchema = z.object({

@@ -1,51 +1,29 @@
 import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { createTicketSchema } from '../../helpers/schema';
+import { format, parseISO } from 'date-fns';
 import {
-  createTicket,
+  createTicket as createTicketApi,
   getTickets,
   getTicketById,
-  approveRejectQuotation,
-  completeTicket,
-  addTicketNote,
   getCompanyInfo,
   getBranches,
   getAssets,
 } from '../../apis';
-import {
-  Divider,
-  Drawer,
-  message,
-  Tag,
-  Tooltip,
-  Modal,
-  Input,
-  Select,
-  Button,
-  Space,
-  Descriptions,
-  Card,
-} from 'antd';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import {
-  createTicketSchema,
-  approveRejectQuotationSchema,
-  completeTicketSchema,
-  addTicketNoteSchema,
-} from '../../helpers/schema';
+import { Divider, message, Tag, Tooltip, Button, Space } from 'antd';
+import { PlusCircle, Eye } from 'lucide-react';
 import ThemedTable from '../../components/ThemedTable';
 import ThemedButton from '../../components/ThemedButton';
-import { format, parseISO } from 'date-fns';
-import {
-  PlusCircle,
-  Eye,
-  Check,
-  X,
-  MessageSquare,
-  FileCheck,
-} from 'lucide-react';
+import DrawerForm from '../../components/DrawerForm';
 
-const { TextArea } = Input;
-const { Option } = Select;
+const statusArr = [
+  { value: 'all', label: 'All' },
+  { value: 'ongoing', label: 'Ongoing' },
+  { value: 'not_started', label: 'Not Started' },
+  { value: 'completed', label: 'Completed' },
+  { value: 'closed', label: 'Closed' },
+];
 
 const Tickets = () => {
   const [data, setData] = useState([]);
@@ -54,27 +32,17 @@ const Tickets = () => {
   const [assets, setAssets] = useState([]);
   const [services, setServices] = useState([]);
 
-  const [loading, setLoading] = useState(false);
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [formAction, setFormAction] = useState('create');
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const [detailDrawerVisible, setDetailDrawerVisible] = useState(false);
-  const [quotationModalVisible, setQuotationModalVisible] = useState(false);
-  const [completeModalVisible, setCompleteModalVisible] = useState(false);
-  const [noteModalVisible, setNoteModalVisible] = useState(false);
-  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
     total: 0,
   });
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    watch,
-    reset,
-  } = useForm({
+  const createTicketForm = useForm({
     resolver: zodResolver(createTicketSchema),
     defaultValues: {
       priority: 'normal',
@@ -86,7 +54,7 @@ const Tickets = () => {
     fetchInfo();
     fetchBranches();
     fetchAssets();
-  }, [pagination.current, pagination.pageSize]);
+  }, [pagination.current, pagination.pageSize, filterStatus]);
 
   const fetchTickets = async () => {
     try {
@@ -94,6 +62,7 @@ const Tickets = () => {
       const { data } = await getTickets({
         page: pagination.current,
         limit: pagination.pageSize,
+        status: filterStatus,
       });
       setData(data?.data?.tickets || []);
       setPagination((prev) => ({
@@ -151,203 +120,19 @@ const Tickets = () => {
     }
   };
 
-  // Approve/Reject Quotation Form
-  const QuotationForm = () => {
-    const {
-      register,
-      handleSubmit,
-      formState: { errors },
-      setValue,
-      watch,
-    } = useForm({
-      resolver: zodResolver(approveRejectQuotationSchema),
-      defaultValues: {
-        action: 'approve',
-      },
-    });
-
-    const onSubmit = async (values) => {
-      try {
-        setLoading(true);
-        await approveRejectQuotation(selectedTicket?.id, values);
-        message.success(
-          `Quotation ${
-            values.action === 'approve' ? 'approved' : 'rejected'
-          } successfully`,
-        );
-        setQuotationModalVisible(false);
-        fetchTicketDetails(selectedTicket?.id);
-      } catch (err) {
-        message.error(err.response?.data?.message || 'Something went wrong.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const action = watch('action');
-
-    return (
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <div>
-          <label className="theme-text font-semibold">Action *</label>
-          <Select
-            value={watch('action')}
-            onChange={(value) => setValue('action', value)}
-            className="w-full mt-1"
-          >
-            <Option value="approve">Approve</Option>
-            <Option value="reject">Reject</Option>
-          </Select>
-        </div>
-
-        {action === 'reject' && (
-          <div>
-            <label className="theme-text font-semibold">
-              Rejection Reason *
-            </label>
-            <TextArea
-              {...register('rejection_reason')}
-              placeholder="Enter rejection reason (min 10, max 500 characters)"
-              rows={4}
-              className="mt-1"
-            />
-            {errors.rejection_reason && (
-              <p className="text-red-500 text-sm mt-1">
-                {errors.rejection_reason.message}
-              </p>
-            )}
-          </div>
-        )}
-
-        <ThemedButton
-          type="submit"
-          text={action === 'approve' ? 'Approve Quotation' : 'Reject Quotation'}
-          loading={loading}
-          className="mt-2"
-        />
-      </form>
-    );
-  };
-
-  // Complete Ticket Form
-  const CompleteTicketForm = () => {
-    const {
-      register,
-      handleSubmit,
-      formState: { errors },
-    } = useForm({
-      resolver: zodResolver(completeTicketSchema),
-    });
-
-    return (
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <div>
-          <label className="theme-text font-semibold">
-            Completion Notes (Optional)
-          </label>
-          <TextArea
-            {...register('notes')}
-            placeholder="Enter completion notes (max 500 characters)"
-            rows={4}
-            className="mt-1"
-          />
-          {errors.notes && (
-            <p className="text-red-500 text-sm mt-1">{errors.notes.message}</p>
-          )}
-        </div>
-
-        <ThemedButton
-          type="submit"
-          text="Complete Ticket"
-          loading={loading}
-          className="mt-2"
-        />
-      </form>
-    );
-  };
-
-  // Add Note Form
-  const AddNoteForm = () => {
-    const {
-      register,
-      handleSubmit,
-      formState: { errors },
-    } = useForm({
-      resolver: zodResolver(addTicketNoteSchema),
-    });
-
-    const onSubmit = async (values) => {
-      try {
-        setLoading(true);
-        await addTicketNote(selectedTicket?.id, values);
-        message.success('Note added successfully');
-        setNoteModalVisible(false);
-        fetchTicketDetails(selectedTicket?.id);
-      } catch (err) {
-        message.error(err.response?.data?.message || 'Something went wrong.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    return (
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <div>
-          <label className="theme-text font-semibold">Note Text *</label>
-          <TextArea
-            {...register('text')}
-            placeholder="Enter note text (max 500 characters)"
-            rows={4}
-            className="mt-1"
-          />
-          {errors.text && (
-            <p className="text-red-500 text-sm mt-1">{errors.text.message}</p>
-          )}
-        </div>
-
-        <ThemedButton
-          type="submit"
-          text="Add Note"
-          loading={loading}
-          className="mt-2"
-        />
-      </form>
-    );
-  };
-
   // Create Ticket Submit Handler
-  const onCreateTicket = async (values) => {
+  const createTicket = async (values) => {
     try {
-      setLoading(true);
       const data = {
         ...values,
         contract_id: contract._id,
       };
-      await createTicket(data);
+      await createTicketApi(data);
       message.success('Ticket created successfully');
-      reset();
-      setDrawerVisible(false);
       fetchTickets();
+      return true;
     } catch (err) {
-      message.error(err.response?.data?.message || 'Something went wrong.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Complete Ticket Form
-  const onSubmit = async (values) => {
-    try {
-      setLoading(true);
-      await completeTicket(selectedTicket?.id, values);
-      message.success('Ticket completed successfully');
-      setCompleteModalVisible(false);
-      fetchTicketDetails(selectedTicket?.id);
-      fetchTickets();
-    } catch (err) {
-      message.error(err.response?.data?.message || 'Something went wrong.');
-    } finally {
-      setLoading(false);
+      throw err;
     }
   };
 
@@ -407,9 +192,10 @@ const Tickets = () => {
       },
     },
     {
-      title: 'Company',
-      dataIndex: ['company', 'name'],
-      key: 'company.name',
+      title: 'Service',
+      dataIndex: ['service', 'title', 'en'],
+      key: 'service.title.en',
+      render: (text, record) => record.service?.name || text || '—',
     },
     {
       title: 'Branch',
@@ -428,55 +214,96 @@ const Tickets = () => {
       render: (text) => text || '—',
     },
     {
-      title: 'Service',
-      dataIndex: ['service', 'title', 'en'],
-      key: 'service.title.en',
-      render: (text, record) => record.service?.name || text || '—',
-    },
-    {
-      title: 'Assigned Worker',
-      key: 'worker',
-      render: (_, record) => (
-        <span>
-          {record.worker?.first_name && record.worker?.last_name
-            ? `${record.worker.first_name} ${record.worker.last_name}`
-            : '—'}
-        </span>
-      ),
-    },
-    {
-      title: 'Due Date',
-      dataIndex: 'due_date',
-      key: 'due_date',
-      render: (date) =>
-        date ? format(parseISO(date), 'dd MMM, yyyy hh:mm a') : '—',
-    },
-    {
-      title: 'Created At',
-      dataIndex: 'created_at',
-      key: 'created_at',
+      title: 'Date',
+      dataIndex: 'scheduled_date',
+      key: 'scheduled_date',
       render: (date) => (date ? format(parseISO(date), 'dd MMM, yyyy') : '—'),
     },
     {
       title: 'Actions',
       key: 'actions',
-      render: (_, record) => (
+      render: () => (
         <Space>
-          <Button
-            type="link"
-            icon={<Eye size={16} />}
-            onClick={() => fetchTicketDetails(record.id)}
-          >
-            View
-          </Button>
+          <Eye size={16} />
         </Space>
       ),
     },
   ];
 
+  const formItems = [
+    {
+      name: 'service_id',
+      label: 'Service',
+      type: 'select',
+      placeholder: 'Select Service',
+      options: services.map((service) => ({
+        value: service._id,
+        label: service.title.en,
+      })),
+    },
+    {
+      name: 'branch_id',
+      label: 'Branch',
+      type: 'select',
+      placeholder: 'Select Branch',
+      options: branches.map((branch) => ({
+        value: branch._id,
+        label: branch.name,
+      })),
+    },
+    {
+      name: 'asset_id',
+      label: 'Asset',
+      type: 'select',
+      placeholder: 'Select Asset',
+      options: assets.map((asset) => ({
+        value: asset._id,
+        label: asset.name,
+      })),
+    },
+    {
+      name: 'description',
+      label: 'Description',
+      type: 'textarea',
+      placeholder: 'Enter ticket description',
+      rows: 3,
+    },
+    {
+      name: 'priority',
+      label: 'Priority',
+      type: 'select',
+      placeholder: 'Select Priority',
+      options: [
+        { value: 'normal', label: 'Normal' },
+        { value: 'medium', label: 'Medium' },
+        { value: 'high', label: 'High' },
+      ],
+    },
+    {
+      name: 'scheduled_date',
+      label: 'Date',
+      type: 'date',
+      placeholder: 'Select Date',
+    },
+  ];
+
   return (
     <div className="w-full h-full px-4">
-      <div className="w-full flex-content-right py-4">
+      <div className="w-full flex items-center justify-between py-4">
+        {/* Status Badges */}
+        <div className="flex gap-2">
+          {statusArr.map((status) => (
+            <ThemedButton
+              key={status.value}
+              text={status.label}
+              className="capitalize cursor-pointer"
+              onClick={() => setFilterStatus(status.value)}
+              variant={filterStatus === status.value ? 'primary' : 'outlined'}
+            />
+          ))}
+        </div>
+
+        {/* Create Ticket Button */}
         <ThemedButton
           text="Create Ticket"
           icon={<PlusCircle />}
@@ -502,341 +329,15 @@ const Tickets = () => {
       />
 
       {/* Create Ticket Drawer */}
-      <Drawer
-        title="Create Ticket"
-        open={drawerVisible}
-        onClose={() => setDrawerVisible(false)}
-        width={800}
-      >
-        <form
-          onSubmit={handleSubmit(onCreateTicket)}
-          className="flex flex-col gap-4"
-        >
-          <div className="mb-4">
-            <h2 className="text-xl font-bold">
-              <span className="theme-text">Contract : </span>
-              <span className="text-gray-800 text-lg">
-                {contract?.title || 'N/A'}
-              </span>
-            </h2>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label
-              htmlFor="branch_id"
-              className="theme-text text-xl font-semibold"
-            >
-              Branch
-            </label>
-            <Select
-              value={watch('branch_id')}
-              onChange={(value) => setValue('branch_id', value)}
-              className="w-full mt-1"
-              placeholder="Select Branch"
-            >
-              {branches.map((branch) => (
-                <Option key={branch._id} value={branch._id}>
-                  {branch.name}
-                </Option>
-              ))}
-            </Select>
-            {errors.branch_id && (
-              <p className="text-red-500">{errors.branch_id.message}</p>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label
-              htmlFor="asset_id"
-              className="theme-text text-xl font-semibold"
-            >
-              Asset
-            </label>
-            <Select
-              value={watch('asset_id')}
-              onChange={(value) => setValue('asset_id', value)}
-              className="w-full mt-1"
-              placeholder="Select Asset"
-            >
-              {assets.map((asset) => (
-                <Option key={asset._id} value={asset._id}>
-                  {asset.name}
-                </Option>
-              ))}
-            </Select>
-            {errors.asset_id && (
-              <p className="text-red-500">{errors.asset_id.message}</p>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label
-              htmlFor="service_id"
-              className="theme-text text-xl font-semibold"
-            >
-              Service
-            </label>
-            <Select
-              value={watch('service_id')}
-              onChange={(value) => setValue('service_id', value)}
-              className="w-full mt-1"
-              placeholder="Select Service"
-            >
-              {services.map((service) => (
-                <Option key={service._id} value={service._id}>
-                  {service.title.en}
-                </Option>
-              ))}
-            </Select>
-            {errors.service_id && (
-              <p className="text-red-500">{errors.service_id.message}</p>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label
-              htmlFor="description"
-              className="theme-text text-xl font-semibold"
-            >
-              Description
-            </label>
-            <input
-              {...register('description')}
-              placeholder="Enter ticket description"
-              className="mt-1 w-full h-20 border-2 border-gray-300 p-2 rounded-md focus:outline-none"
-            />
-            {errors.description && (
-              <p className="text-red-500">{errors.description.message}</p>
-            )}
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <label
-              htmlFor="priority"
-              className="theme-text text-xl font-semibold"
-            >
-              Priority
-            </label>
-            <Select
-              value={watch('priority')}
-              onChange={(value) => setValue('priority', value)}
-              className="w-full mt-1"
-              placeholder="Select Priority"
-            >
-              <Option value="normal">Normal</Option>
-              <Option value="medium">Medium</Option>
-              <Option value="high">High</Option>
-            </Select>
-            {errors.priority && (
-              <p className="text-red-500">{errors.priority.message}</p>
-            )}
-          </div>
-
-          <ThemedButton
-            type="submit"
-            text="Create"
-            className="p-2 font-semibold text-xl"
-            loading={loading}
-          />
-        </form>
-      </Drawer>
-
-      {/* Ticket Details Drawer */}
-      <Drawer
-        title={`Ticket Details - ${selectedTicket?.ticket_number || ''}`}
-        open={detailDrawerVisible}
-        onClose={() => {
-          setDetailDrawerVisible(false);
-          setSelectedTicket(null);
-        }}
-        width={600}
-        extra={
-          <Space>
-            {selectedTicket?.status === 'quotation_pending' && (
-              <Button
-                type="primary"
-                icon={<FileCheck />}
-                onClick={() => setQuotationModalVisible(true)}
-              >
-                Review Quotation
-              </Button>
-            )}
-            {selectedTicket?.status === 'in_progress' && (
-              <Button
-                type="primary"
-                icon={<Check />}
-                onClick={() => setCompleteModalVisible(true)}
-              >
-                Complete
-              </Button>
-            )}
-            <Button
-              icon={<MessageSquare />}
-              onClick={() => setNoteModalVisible(true)}
-            >
-              Add Note
-            </Button>
-          </Space>
-        }
-      >
-        {selectedTicket && (
-          <div className="flex flex-col gap-4">
-            <Descriptions bordered column={1}>
-              <Descriptions.Item label="Ticket Number">
-                {selectedTicket.ticket_number}
-              </Descriptions.Item>
-              <Descriptions.Item label="Type">
-                <Tag>{selectedTicket.type}</Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Status">
-                <Tag
-                  color={
-                    selectedTicket.status === 'completed' ||
-                    selectedTicket.status === 'closed'
-                      ? 'green'
-                      : selectedTicket.status === 'quotation_pending'
-                      ? 'orange'
-                      : 'blue'
-                  }
-                >
-                  {selectedTicket.status.toUpperCase().replace('_', ' ')}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Priority">
-                <Tag color={selectedTicket.priority === 'red' ? 'red' : 'gold'}>
-                  {selectedTicket.priority}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Description">
-                {selectedTicket.description}
-              </Descriptions.Item>
-              <Descriptions.Item label="Company">
-                {selectedTicket.company?.name || '—'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Branch">
-                {selectedTicket.branch?.name || '—'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Asset">
-                {selectedTicket.asset?.name || '—'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Service">
-                {selectedTicket.service?.name ||
-                  selectedTicket.service?.title?.en ||
-                  '—'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Worker">
-                {selectedTicket.worker?.first_name &&
-                selectedTicket.worker?.last_name
-                  ? `${selectedTicket.worker.first_name} ${selectedTicket.worker.last_name}`
-                  : '—'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Created At">
-                {selectedTicket.created_at
-                  ? format(
-                      parseISO(selectedTicket.created_at),
-                      'dd MMM, yyyy hh:mm a',
-                    )
-                  : '—'}
-              </Descriptions.Item>
-              {selectedTicket.completed_at && (
-                <Descriptions.Item label="Completed At">
-                  {format(
-                    parseISO(selectedTicket.completed_at),
-                    'dd MMM, yyyy hh:mm a',
-                  )}
-                </Descriptions.Item>
-              )}
-            </Descriptions>
-
-            {selectedTicket.quotation && (
-              <Card title="Quotation Details" className="mt-4">
-                <Descriptions bordered column={1} size="small">
-                  <Descriptions.Item label="Materials Cost">
-                    Rs{' '}
-                    {selectedTicket.quotation.materials_cost?.toLocaleString() ||
-                      0}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Labor Cost">
-                    Rs{' '}
-                    {selectedTicket.quotation.labor_cost?.toLocaleString() || 0}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Total Cost">
-                    Rs{' '}
-                    {selectedTicket.quotation.total_cost?.toLocaleString() || 0}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Status">
-                    <Tag
-                      color={
-                        selectedTicket.quotation.approved
-                          ? 'green'
-                          : selectedTicket.quotation.rejected
-                          ? 'red'
-                          : 'orange'
-                      }
-                    >
-                      {selectedTicket.quotation.approved
-                        ? 'Approved'
-                        : selectedTicket.quotation.rejected
-                        ? 'Rejected'
-                        : 'Pending'}
-                    </Tag>
-                  </Descriptions.Item>
-                </Descriptions>
-              </Card>
-            )}
-
-            {selectedTicket.notes && selectedTicket.notes.length > 0 && (
-              <Card title="Notes" className="mt-4">
-                <div className="flex flex-col gap-2">
-                  {selectedTicket.notes.map((note, index) => (
-                    <div key={index} className="border-b pb-2">
-                      <p className="text-sm">{note.text}</p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        {note.created_at
-                          ? format(
-                              parseISO(note.created_at),
-                              'dd MMM, yyyy hh:mm a',
-                            )
-                          : ''}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
-          </div>
-        )}
-      </Drawer>
-
-      {/* Quotation Modal */}
-      <Modal
-        title="Approve/Reject Quotation"
-        open={quotationModalVisible}
-        onCancel={() => setQuotationModalVisible(false)}
-        footer={null}
-      >
-        <QuotationForm />
-      </Modal>
-
-      {/* Complete Ticket Modal */}
-      <Modal
-        title="Complete Ticket"
-        open={completeModalVisible}
-        onCancel={() => setCompleteModalVisible(false)}
-        footer={null}
-      >
-        <CompleteTicketForm />
-      </Modal>
-
-      {/* Add Note Modal */}
-      <Modal
-        title="Add Note"
-        open={noteModalVisible}
-        onCancel={() => setNoteModalVisible(false)}
-        footer={null}
-      >
-        <AddNoteForm />
-      </Modal>
+      <DrawerForm
+        visible={drawerVisible}
+        setVisible={setDrawerVisible}
+        title="Create ticket"
+        action={formAction}
+        form={createTicketForm}
+        onSubmit={createTicket}
+        formItems={formItems}
+      />
     </div>
   );
 };
