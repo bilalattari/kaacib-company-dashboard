@@ -1,35 +1,28 @@
 import { useEffect, useState } from 'react';
-import {
-  createBranch,
-  getBranches,
-  getBranchById,
-  updateBranch,
-  deleteBranch,
-  getBranchAssets,
-  getBranchUsers,
-} from '../../apis';
-import { message, Tag, Tooltip, Drawer, Modal, Input, Select, Button, Space, Descriptions, Card, Popconfirm } from 'antd';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { createBranch as createBranchApi, getBranches } from '../../apis';
 import { createBranchSchema } from '../../helpers/schema';
+import { PlusCircle, Edit, Trash2, Eye } from 'lucide-react';
+import { message, Tag, Tooltip, Button, Space, Popconfirm } from 'antd';
 import ThemedTable from '../../components/ThemedTable';
 import ThemedButton from '../../components/ThemedButton';
-import { format, parseISO } from 'date-fns';
-import { PlusCircle, Edit, Trash2, Eye } from 'lucide-react';
-
-const { TextArea } = Input;
-const { Option } = Select;
+import DrawerForm from '../../components/DrawerForm';
 
 const Branches = () => {
   const [loading, setLoading] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const [detailDrawerVisible, setDetailDrawerVisible] = useState(false);
   const [data, setData] = useState([]);
-  const [selectedBranch, setSelectedBranch] = useState(null);
   const [editingBranch, setEditingBranch] = useState(null);
-  const [assets, setAssets] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
+
+  const createBranchForm = useForm({
+    resolver: zodResolver(createBranchSchema),
+  });
 
   useEffect(() => {
     fetchBranches();
@@ -54,35 +47,22 @@ const Branches = () => {
     }
   };
 
-  const fetchBranchDetails = async (id) => {
+  const createBranch = async (data) => {
     try {
-      setLoading(true);
-      const [branchRes, assetsRes, usersRes] = await Promise.all([
-        getBranchById(id),
-        getBranchAssets(id),
-        getBranchUsers(id),
-      ]);
-      setSelectedBranch(branchRes.data?.data?.branch);
-      setAssets(assetsRes.data?.data?.assets || []);
-      setUsers(usersRes.data?.data?.users || []);
-      setDetailDrawerVisible(true);
-    } catch (err) {
-      message.error(err.response?.data?.message || 'Something went wrong.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      setLoading(true);
-      await deleteBranch(id);
-      message.success('Branch deleted successfully');
+      const obj = {
+        ...data,
+        coordinates: {
+          lat: 0,
+          lng: 0,
+        },
+      };
+      await createBranchApi(obj);
       fetchBranches();
+      message.success('Branch created successfully.');
+      return true;
     } catch (err) {
-      message.error(err.response?.data?.message || 'Something went wrong.');
-    } finally {
-      setLoading(false);
+      console.error(err);
+      throw err;
     }
   };
 
@@ -104,6 +84,28 @@ const Branches = () => {
           )}
         </span>
       ),
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      render: (status) => (
+        <Tag color={status === 'active' ? 'green' : 'volcano'}>
+          {status.toUpperCase()}
+        </Tag>
+      ),
+    },
+    {
+      title: 'Tickets',
+      dataIndex: 'tickets',
+      key: 'tickets',
+      render: (num) => <span>{num ?? 0}</span>,
+    },
+    {
+      title: 'Assets',
+      dataIndex: 'assets',
+      key: 'assets',
+      render: (num) => <span>{num ?? 0}</span>,
     },
     {
       title: 'City',
@@ -128,225 +130,84 @@ const Branches = () => {
       ),
     },
     {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => (
-        <Tag color={status === 'active' ? 'green' : 'volcano'}>
-          {status.toUpperCase()}
-        </Tag>
-      ),
-    },
-    {
-      title: 'Assets',
-      dataIndex: 'total_assets',
-      key: 'total_assets',
-      render: (num) => <span>{num ?? 0}</span>,
-    },
-    {
-      title: 'Users',
-      dataIndex: 'total_users',
-      key: 'total_users',
-      render: (num) => <span>{num ?? 0}</span>,
-    },
-    {
-      title: 'Bookings',
-      dataIndex: 'total_bookings',
-      key: 'total_bookings',
-      render: (num) => <span>{num ?? 0}</span>,
-    },
-    {
       title: 'Actions',
       key: 'actions',
       render: (_, record) => (
         <Space>
-          <Button
-            type="link"
-            icon={<Eye size={16} />}
-            onClick={() => fetchBranchDetails(record.id)}
-          >
-            View
-          </Button>
-          <Button
-            type="link"
-            icon={<Edit size={16} />}
-            onClick={() => {
-              setEditingBranch(record);
-              setDrawerVisible(true);
-            }}
-          >
-            Edit
-          </Button>
+          <Tooltip title="View Details">
+            <Button
+              type="link"
+              icon={<Eye size={16} />}
+              onClick={() => fetchBranchDetails(record.id)}
+            />
+          </Tooltip>
+          <Tooltip title="Edit">
+            <Button
+              type="link"
+              icon={<Edit size={16} />}
+              onClick={() => {
+                setEditingBranch(record);
+                setDrawerVisible(true);
+              }}
+            />
+          </Tooltip>
           <Popconfirm
             title="Are you sure you want to delete this branch?"
             onConfirm={() => handleDelete(record.id)}
             okText="Yes"
             cancelText="No"
           >
-            <Button type="link" danger icon={<Trash2 size={16} />}>
-              Delete
-            </Button>
+            <Tooltip title="Delete">
+              <Button type="link" danger icon={<Trash2 size={16} />} />
+            </Tooltip>
           </Popconfirm>
         </Space>
       ),
     },
   ];
 
-  // Create/Edit Branch Form
-  const BranchForm = () => {
-    const {
-      register,
-      handleSubmit,
-      formState: { errors },
-      setValue,
-      watch,
-      reset,
-    } = useForm({
-      resolver: zodResolver(createBranchSchema),
-      defaultValues: editingBranch || {
-        status: 'active',
-        is_main_branch: false,
-      },
-    });
-
-    // Set form values when editing
-    useEffect(() => {
-      if (editingBranch) {
-        Object.keys(editingBranch).forEach((key) => {
-          setValue(key, editingBranch[key]);
-        });
-      } else {
-        reset({
-          status: 'active',
-          is_main_branch: false,
-        });
-      }
-    }, [editingBranch, setValue, reset]);
-
-    const onSubmit = async (values) => {
-      try {
-        setLoading(true);
-        if (editingBranch) {
-          await updateBranch(editingBranch.id, values);
-          message.success('Branch updated successfully');
-        } else {
-          await createBranch(values);
-          message.success('Branch created successfully');
-        }
-        setDrawerVisible(false);
-        setEditingBranch(null);
-        fetchBranches();
-      } catch (err) {
-        message.error(err.response?.data?.message || 'Something went wrong.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    return (
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <div>
-          <label className="theme-text font-semibold">Name *</label>
-          <Input
-            {...register('name')}
-            placeholder="Enter branch name"
-            className="mt-1"
-          />
-          {errors.name && (
-            <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="theme-text font-semibold">Address *</label>
-          <TextArea
-            {...register('address')}
-            placeholder="Enter complete address"
-            rows={3}
-            className="mt-1"
-          />
-          {errors.address && (
-            <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="theme-text font-semibold">City *</label>
-          <Input
-            {...register('city')}
-            placeholder="Enter city name"
-            className="mt-1"
-          />
-          {errors.city && (
-            <p className="text-red-500 text-sm mt-1">{errors.city.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="theme-text font-semibold">Area (Optional)</label>
-          <Input
-            {...register('area')}
-            placeholder="Enter area name"
-            className="mt-1"
-          />
-        </div>
-
-        <div>
-          <label className="theme-text font-semibold">Phone (Optional)</label>
-          <Input
-            {...register('phone')}
-            placeholder="Enter phone number"
-            className="mt-1"
-          />
-        </div>
-
-        <div>
-          <label className="theme-text font-semibold">Email (Optional)</label>
-          <Input
-            {...register('email')}
-            type="email"
-            placeholder="Enter email address"
-            className="mt-1"
-          />
-          {errors.email && (
-            <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="theme-text font-semibold">Status</label>
-          <Select
-            value={watch('status')}
-            onChange={(value) => setValue('status', value)}
-            className="w-full mt-1"
-          >
-            <Option value="active">Active</Option>
-            <Option value="inactive">Inactive</Option>
-          </Select>
-        </div>
-
-        <div>
-          <label className="theme-text font-semibold">
-            <input
-              type="checkbox"
-              {...register('is_main_branch')}
-              checked={watch('is_main_branch')}
-              onChange={(e) => setValue('is_main_branch', e.target.checked)}
-              className="mr-2"
-            />
-            Is Main Branch
-          </label>
-        </div>
-
-        <ThemedButton
-          type="submit"
-          text={editingBranch ? 'Update Branch' : 'Create Branch'}
-          loading={loading}
-          className="mt-2"
-        />
-      </form>
-    );
-  };
+  const formItems = [
+    {
+      name: 'name',
+      label: 'Branch Name',
+      type: 'text',
+      placeholder: 'Enter branch name',
+    },
+    {
+      name: 'address',
+      label: 'Address',
+      type: 'textarea',
+      placeholder: 'Enter branch address',
+    },
+    {
+      name: 'city',
+      label: 'City',
+      type: 'text',
+      placeholder: 'Enter city',
+    },
+    {
+      name: 'area',
+      label: 'Area',
+      type: 'text',
+      placeholder: 'Enter area',
+    },
+    {
+      name: 'phone',
+      label: 'Phone Number',
+      type: 'text',
+      placeholder: 'Enter phone number',
+    },
+    {
+      name: 'status',
+      label: 'Status',
+      type: 'select',
+      placeholder: 'Select status',
+      options: [
+        { value: 'active', label: 'Active' },
+        { value: 'inactive', label: 'Inactive' },
+      ],
+    },
+  ];
 
   return (
     <div className="w-full h-full px-4">
@@ -376,106 +237,15 @@ const Branches = () => {
         }}
       />
 
-      {/* Create/Edit Branch Drawer */}
-      <Drawer
-        title={editingBranch ? 'Edit Branch' : 'Create Branch'}
-        open={drawerVisible}
-        onClose={() => {
-          setDrawerVisible(false);
-          setEditingBranch(null);
-        }}
-        width={500}
-      >
-        <BranchForm />
-      </Drawer>
-
-      {/* Branch Details Drawer */}
-      <Drawer
-        title={`Branch Details - ${selectedBranch?.name || ''}`}
-        open={detailDrawerVisible}
-        onClose={() => {
-          setDetailDrawerVisible(false);
-          setSelectedBranch(null);
-          setAssets([]);
-          setUsers([]);
-        }}
-        width={600}
-      >
-        {selectedBranch && (
-          <div className="flex flex-col gap-4">
-            <Descriptions bordered column={1}>
-              <Descriptions.Item label="Name">{selectedBranch.name}</Descriptions.Item>
-              <Descriptions.Item label="Address">{selectedBranch.address}</Descriptions.Item>
-              <Descriptions.Item label="City">{selectedBranch.city}</Descriptions.Item>
-              <Descriptions.Item label="Area">
-                {selectedBranch.area || '—'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Phone">
-                {selectedBranch.phone || '—'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Email">
-                {selectedBranch.email || '—'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Status">
-                <Tag color={selectedBranch.status === 'active' ? 'green' : 'volcano'}>
-                  {selectedBranch.status.toUpperCase()}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Main Branch">
-                <Tag color={selectedBranch.is_main_branch ? 'blue' : 'default'}>
-                  {selectedBranch.is_main_branch ? 'Yes' : 'No'}
-                </Tag>
-              </Descriptions.Item>
-              {selectedBranch.coordinates && (
-                <>
-                  <Descriptions.Item label="Latitude">
-                    {selectedBranch.coordinates.lat}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Longitude">
-                    {selectedBranch.coordinates.lng}
-                  </Descriptions.Item>
-                </>
-              )}
-              <Descriptions.Item label="Created At">
-                {selectedBranch.created_at
-                  ? format(parseISO(selectedBranch.created_at), 'dd MMM, yyyy hh:mm a')
-                  : '—'}
-              </Descriptions.Item>
-            </Descriptions>
-
-            {assets.length > 0 && (
-              <Card title="Branch Assets" className="mt-4">
-                <div className="flex flex-col gap-2">
-                  {assets.map((asset) => (
-                    <div key={asset.id} className="border-b pb-2">
-                      <p className="font-medium">{asset.name}</p>
-                      <p className="text-sm text-gray-500">{asset.asset_type}</p>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
-
-            {users.length > 0 && (
-              <Card title="Branch Users" className="mt-4">
-                <div className="flex flex-col gap-2">
-                  {users.map((user) => (
-                    <div key={user.id} className="border-b pb-2">
-                      <p className="font-medium">
-                        {user.first_name} {user.last_name}
-                      </p>
-                      <p className="text-sm text-gray-500">{user.email}</p>
-                      <Tag color="blue" className="mt-1">
-                        {user.role}
-                      </Tag>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            )}
-          </div>
-        )}
-      </Drawer>
+      <DrawerForm
+        action={'create'}
+        title={editingBranch ? 'Edit branch' : 'Create branch'}
+        visible={drawerVisible}
+        setVisible={setDrawerVisible}
+        form={createBranchForm}
+        formItems={formItems}
+        onSubmit={createBranch}
+      />
     </div>
   );
 };
