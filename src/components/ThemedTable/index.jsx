@@ -49,9 +49,11 @@ const ThemedTable = ({ columns, data, summary, loading, pagination }) => {
         current: pagination?.current,
         pageSize: pagination?.pageSize,
         hideOnSinglePage: true,
-        onChange: (page, pageSize) => {
+        onChange: (page) => {
           pagination?.setCurrentPage?.(page);
-          pagination?.setResultPerPage?.(pageSize);
+        },
+        onShowSizeChange: (_, size) => {
+          pagination?.setResultPerPage?.(size);
         },
       }}
       loading={loading ? { spinning: false } : false}
