@@ -56,18 +56,22 @@ const Tickets = () => {
     fetchAssets();
   }, [pagination.current, pagination.pageSize, filterStatus]);
 
+  useEffect(() => {
+    console.log('Pagination changed', pagination.current);
+  }, [pagination.current]);
+
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      const { data } = await getTickets({
+      const { data: res } = await getTickets({
         page: pagination.current,
         limit: pagination.pageSize,
         status: filterStatus,
       });
-      setData(data?.data?.tickets || []);
+      setData(res?.data?.tickets || []);
       setPagination((prev) => ({
         ...prev,
-        total: data?.data?.pagination?.totalItems || 0,
+        total: res?.data?.pagination?.total || res?.data?.tickets?.length || 0,
       }));
     } catch (err) {
       message.error(err.response?.data?.message || 'Something went wrong.');
