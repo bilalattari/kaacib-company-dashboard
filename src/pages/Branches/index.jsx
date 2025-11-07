@@ -38,7 +38,7 @@ const Branches = () => {
       setData(data?.data?.branches || []);
       setPagination((prev) => ({
         ...prev,
-        total: data?.data?.pagination?.totalItems || 0,
+        total: data?.data?.pagination?.total || 0,
       }));
     } catch (err) {
       message.error(err.response?.data?.message || 'Something went wrong.');
