@@ -53,19 +53,21 @@ const AppLayout = () => {
 
   return (
     <div className="flex w-screen h-screen">
-      <div className="max-w-[10%]">
+      <div className="max-w-[15%]">
         <ThemedSidebar />
       </div>
 
-      <div className="flex-1 flex flex-col gap-4">
-        <div className="w-full h-20 flex items-center px-6">
+      <div className="flex-1 flex flex-col gap-4 overflow-scroll py-3">
+        <div className="w-full h-20 flex items-center px-6 pt-4">
           <Breadcrumb
             items={breadcrumbItems}
             separator={<ChevronRight size={22} className="text-gray-400!" />}
             className="theme-text!"
           />
         </div>
-        <Outlet />
+        <div className="px-2">
+          <Outlet />
+        </div>
       </div>
     </div>
   );
