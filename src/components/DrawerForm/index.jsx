@@ -8,6 +8,7 @@ const inputTypes = {
   textarea: 'textarea',
   select: 'select',
   date: 'date',
+  number: 'number',
 };
 
 const DrawerForm = ({
@@ -88,12 +89,27 @@ const DrawerForm = ({
                   options={item.options}
                   className="w-full"
                 />
+              ) : item.type === inputTypes.textarea ? (
+                <textarea
+                  {...register(item.name)}
+                  placeholder={item.placeholder || `Enter ${item.label}`}
+                  rows={item.rows || 3}
+                  className="w-full border-2 border-gray-300 p-2 rounded-sm focus:outline-none"
+                />
               ) : (
                 <input
-                  {...register(item.name)}
-                  type={item.type || 'text'}
+                  {...register(item.name, {
+                    ...(item.type === inputTypes.number && {
+                      valueAsNumber: true,
+                    }),
+                  })}
+                  type={inputTypes[item.type] || inputTypes.text}
                   placeholder={item.placeholder || `Enter ${item.label}`}
                   className="w-full border-2 border-gray-300 p-2 rounded-sm focus:outline-none"
+                  {...(item.type === inputTypes.number && {
+                    min: item.min,
+                    max: item.max,
+                  })}
                 />
               )}
               {errors[item.name] && (
