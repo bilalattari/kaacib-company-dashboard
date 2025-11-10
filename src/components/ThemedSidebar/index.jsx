@@ -94,9 +94,15 @@ const ThemedSidebar = () => {
             key={item.path}
             icon={item.icon}
             onClick={() => navigate(item.path)}
-            className="flex items-center justify-between text-white! mb-2! hover:bg-white/90! hover:text-black! hover:shadow-md! hover:translate-y-1 [&.ant-menu-item-selected]:bg-white/90! [&.ant-menu-item-selected]:text-black! [&.ant-menu-item-selected]:shadow-md! [&.ant-menu-item-selected]:translate-y-1! transition-all duration-300"
+            label={item.label}
+            title={collapsed && item.label}
+            className={`w-full! flex! items-center justify-between text-white! mb-2! hover:bg-white/90! hover:text-black! hover:shadow-md! hover:translate-y-1 [&.ant-menu-item-selected]:bg-white/90! [&.ant-menu-item-selected]:text-black! [&.ant-menu-item-selected]:shadow-md! [&.ant-menu-item-selected]:translate-y-1! transition-all duration-300 m-0! ${
+              collapsed ? 'px-0! justify-center!' : 'px-4!'
+            }`}
           >
-            <span className="text-md">{item.label}</span>
+            <span className={`text-md ${collapsed && 'hidden'}`}>
+              {item.label}
+            </span>
           </Menu.Item>
         ))}
       </Menu>
