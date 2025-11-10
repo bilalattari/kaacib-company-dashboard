@@ -24,7 +24,7 @@ const ThemedTable = ({ columns, data, summary, loading, pagination }) => {
     render: () => (
       <Skeleton.Input
         style={{
-          height: 16,
+          height: 24,
           borderRadius: 6,
         }}
         active
@@ -48,7 +48,7 @@ const ThemedTable = ({ columns, data, summary, loading, pagination }) => {
         total: pagination?.total || data.length,
         current: pagination?.current,
         pageSize: pagination?.pageSize,
-        hideOnSinglePage: true,
+        hideOnSinglePage: false,
         onChange: (page) => {
           pagination?.setCurrentPage?.(page);
         },
