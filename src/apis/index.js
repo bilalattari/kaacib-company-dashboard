@@ -242,6 +242,24 @@ const getContracts = async () => {
   return response;
 };
 
+// ==================== Image Upload APIs ====================
+const uploadMultipleImages = async (folderName, imageList) => {
+  const formData = new FormData();
+  imageList.forEach((file, index) => {
+    const originalFile = file.originFileObj || file;
+    formData.append(`image${index}`, originalFile);
+  });
+
+  const { data: apiRes } = await axiosInstance.post(
+    `/global/upload/multiple/${folderName}`,
+    formData,
+  );
+
+  const urls = Object.values(apiRes?.data?.urls);
+
+  return urls;
+};
+
 export {
   // Authentication
   loginUser,
@@ -291,4 +309,6 @@ export {
   getWorkers,
   //Contracts
   getContracts,
+  // Image Upload
+  uploadMultipleImages,
 };
