@@ -73,7 +73,10 @@ const Login = () => {
     return (
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <div>
-          <label htmlFor="forgot-email" className="theme-text text-xl font-semibold">
+          <label
+            htmlFor="forgot-email"
+            className="theme-text text-xl font-semibold"
+          >
             Email
           </label>
           <input
@@ -108,14 +111,17 @@ const Login = () => {
           className="h-full flex-content-center flex-col gap-4"
         >
           <div className="w-full flex flex-col gap-2">
-            <label htmlFor="email" className="theme-text text-xl font-semibold">
+            <label
+              htmlFor="email"
+              className="theme-text text-2xl xl:text-3xl font-semibold"
+            >
               Email
             </label>
             <input
               type="email"
               id="email"
               {...register('email')}
-              className="w-full border-2 theme-border rounded-md py-1 px-2 focus:outline-none"
+              className="w-full text-xl xl:text-2xl border-2 theme-border rounded-md p-2 focus:outline-none"
             />
             {errors.email && (
               <p className="text-red-500">{errors.email.message}</p>
@@ -124,11 +130,11 @@ const Login = () => {
           <div className="flex flex-col gap-2">
             <label
               htmlFor="password"
-              className="theme-text text-xl font-semibold"
+              className="theme-text text-2xl xl:text-3xl font-semibold"
             >
               Password
             </label>
-            <div className="flex-content-center w-full border-2 theme-border rounded-md py-1 px-2 ">
+            <div className="flex-content-center w-full text-xl xl:text-2xl border-2 theme-border rounded-md p-2 ">
               <input
                 type={visible ? 'text' : 'password'}
                 id="password"
@@ -155,13 +161,13 @@ const Login = () => {
           <ThemedButton
             type="submit"
             text="Login"
-            className="p-2 font-semibold text-xl"
+            className="py-2 px-4 font-semibold text-xl xl:text-2xl"
             loading={loading}
           />
           <button
             type="button"
             onClick={() => setForgotPasswordVisible(true)}
-            className="text-sm theme-text hover:underline mt-2"
+            className="xl:text-md theme-text hover:underline"
           >
             Forgot Password?
           </button>
