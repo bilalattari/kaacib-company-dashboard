@@ -49,14 +49,7 @@ const Branches = () => {
 
   const createBranch = async (data) => {
     try {
-      const obj = {
-        ...data,
-        coordinates: {
-          lat: 0,
-          lng: 0,
-        },
-      };
-      await createBranchApi(obj);
+      await createBranchApi(data);
       fetchBranches();
       message.success('Branch created successfully.');
       return true;
@@ -174,12 +167,6 @@ const Branches = () => {
       placeholder: 'Enter branch name',
     },
     {
-      name: 'address',
-      label: 'Address',
-      type: 'textarea',
-      placeholder: 'Enter branch address',
-    },
-    {
       name: 'city',
       label: 'City',
       type: 'text',
@@ -192,10 +179,22 @@ const Branches = () => {
       placeholder: 'Enter area',
     },
     {
+      name: 'address',
+      label: 'Address',
+      type: 'textarea',
+      placeholder: 'Enter branch address',
+    },
+    {
       name: 'phone',
       label: 'Phone Number',
       type: 'text',
       placeholder: 'Enter phone number',
+    },
+    {
+      name: 'map_link',
+      label: 'Google Map Link',
+      type: 'text',
+      placeholder: 'Enter google map link',
     },
     {
       name: 'status',

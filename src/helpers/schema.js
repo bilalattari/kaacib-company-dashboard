@@ -62,12 +62,7 @@ export const createBranchSchema = z.object({
   address: z.string('Address is required').min(10).max(200),
   city: z.string('City is required').min(2).max(50),
   area: z.string().optional(),
-  coordinates: z
-    .object({
-      lat: z.number(),
-      lng: z.number(),
-    })
-    .optional(),
+  map_link: z.string().url().optional().or(z.literal('')),
   status: z.enum(['active', 'inactive']).optional(),
   phone: z.string().optional(),
   email: z.string().email().optional().or(z.literal('')),
