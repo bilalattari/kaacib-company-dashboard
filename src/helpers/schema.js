@@ -70,7 +70,6 @@ export const createBranchSchema = z.object({
 });
 
 export const createAssetSchema = z.object({
-  branch_id: z.string().optional().nullable(),
   name: z.string('Name is required').min(2).max(100),
   asset_type: z.enum([
     'equipment',
@@ -80,23 +79,14 @@ export const createAssetSchema = z.object({
     'technology',
     'other',
   ]),
+  branch_id: z.string('Branch is required'),
   description: z.string().optional(),
-  serial_number: z.string().optional(),
-  model_number: z.string().optional(),
+  maintenance_interval_days: z.number().min(1).max(365),
   brand: z.string().optional(),
-  status: z.enum(['active', 'inactive', 'maintenance', 'retired']).optional(),
-  location: z
-    .object({
-      address: z.string().optional(),
-      coordinates: z
-        .object({
-          lat: z.number(),
-          lng: z.number(),
-        })
-        .optional(),
-    })
-    .optional(),
-  maintenance_interval_days: z.number().min(1).max(365).optional(),
+  status: z.enum(['active', 'inactive', 'maintenance', 'retired']),
+  images: z.array(z.string()).optional(),
+  serial_number: z.string(),
+  model_number: z.string(),
   images: z.array(z.string()).optional(),
 });
 

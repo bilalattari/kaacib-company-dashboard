@@ -67,8 +67,14 @@ const Assets = () => {
     }
   };
 
-  const createAsset = async (data) => {
+  const createAsset = async (values, imageUrls) => {
     try {
+      const data = { ...values };
+
+      if (imageUrls && imageUrls.length > 0) {
+        data.images = imageUrls;
+      }
+
       await createAssetApi(data);
       message.success('Asset added successfully');
       fetchAssets();
@@ -226,6 +232,24 @@ const Assets = () => {
       placeholder: 'Enter brand name',
     },
     {
+      name: 'brand',
+      label: 'Brand (Optional)',
+      type: 'text',
+      placeholder: 'Enter brand name',
+    },
+    {
+      name: 'serial_number',
+      label: 'Serial Number',
+      type: 'text',
+      placeholder: 'Enter serial number',
+    },
+    {
+      name: 'model_number',
+      label: 'Model Number',
+      type: 'text',
+      placeholder: 'Enter model number',
+    },
+    {
       name: 'status',
       label: 'Status',
       type: 'select',
@@ -276,6 +300,7 @@ const Assets = () => {
         form={createAssetForm}
         onSubmit={createAsset}
         formItems={formItems}
+        showImageUpload={true}
       />
     </div>
   );
