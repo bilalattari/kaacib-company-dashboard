@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createTicketSchema } from '../../helpers/schema';
@@ -146,6 +146,21 @@ const Tickets = () => {
     }
   };
 
+  const selectedBranch = createTicketForm.watch('branch_id');
+
+  const filteredAssets = useCallback(() => {
+    if (!selectedBranch) return [];
+
+    const filtered = assets
+      .filter((asset) => asset.branch._id === selectedBranch)
+      .map((asset) => ({
+        value: asset._id,
+        label: asset.name,
+      }));
+
+    return filtered;
+  }, [selectedBranch, assets]);
+
   const columns = [
     {
       title: 'Ticket No',
@@ -266,10 +281,7 @@ const Tickets = () => {
       label: 'Asset',
       type: 'select',
       placeholder: 'Select Asset',
-      options: assets.map((asset) => ({
-        value: asset._id,
-        label: asset.name,
-      })),
+      options: filteredAssets(),
     },
     {
       name: 'description',
