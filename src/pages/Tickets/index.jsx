@@ -11,7 +11,16 @@ import {
   getBranches,
   getAssets,
 } from '../../apis';
-import { Divider, message, Tag, Tooltip, Button, Space } from 'antd';
+import {
+  Divider,
+  message,
+  Tag,
+  Tooltip,
+  Button,
+  Space,
+  Tabs,
+  ConfigProvider,
+} from 'antd';
 import { PlusCircle, Eye } from 'lucide-react';
 import ThemedTable from '../../components/ThemedTable';
 import ThemedButton from '../../components/ThemedButton';
@@ -293,29 +302,35 @@ const Tickets = () => {
 
   return (
     <div className="w-full h-full px-4">
-      <div className="w-full flex items-center justify-between py-4">
-        {/* Status Badges */}
-        <div className="flex gap-2">
-          {statusArr.map((status) => (
-            <ThemedButton
-              key={status.value}
-              text={status.label}
-              className="capitalize cursor-pointer"
-              onClick={() => setFilterStatus(status.value)}
-              variant={filterStatus === status.value ? 'primary' : 'outlined'}
-            />
-          ))}
-        </div>
-
-        {/* Create Ticket Button */}
-        <ThemedButton
-          text="Create Ticket"
-          icon={<PlusCircle />}
-          onClick={() => setDrawerVisible(true)}
+      <ConfigProvider
+        theme={{
+          components: {
+            Tabs: {
+              inkBarColor: '#ff3300',
+            },
+          },
+        }}
+      >
+        <Tabs
+          defaultActiveKey="all"
+          onChange={(key) => setFilterStatus(key)}
+          items={statusArr.map((status) => ({
+            key: status.value,
+            label: <span className="theme-text">{status.label}</span>,
+          }))}
+          tabBarExtraContent={{
+            right: (
+              <div className="w-full flex items-center justify-end py-4">
+                <ThemedButton
+                  text="Create Ticket"
+                  icon={<PlusCircle />}
+                  onClick={() => setDrawerVisible(true)}
+                />
+              </div>
+            ),
+          }}
         />
-      </div>
-
-      <Divider />
+      </ConfigProvider>
 
       <ThemedTable
         loading={loading}
