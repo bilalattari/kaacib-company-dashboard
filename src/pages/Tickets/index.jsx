@@ -65,10 +65,6 @@ const Tickets = () => {
     fetchAssets();
   }, [pagination.current, pagination.pageSize, filterStatus]);
 
-  useEffect(() => {
-    console.log('Pagination changed', pagination.current);
-  }, [pagination.current]);
-
   const fetchTickets = async () => {
     try {
       setLoading(true);
@@ -134,11 +130,12 @@ const Tickets = () => {
   };
 
   // Create Ticket Submit Handler
-  const createTicket = async (values) => {
+  const createTicket = async (values, imageUrls) => {
     try {
       const data = {
         ...values,
         contract_id: contract._id,
+        images: imageUrls,
       };
       await createTicketApi(data);
       message.success('Ticket created successfully');
@@ -356,6 +353,8 @@ const Tickets = () => {
         form={createTicketForm}
         onSubmit={createTicket}
         formItems={formItems}
+        showImageUpload={true}
+        imageRequired={true}
       />
     </div>
   );
