@@ -31,7 +31,7 @@ axiosInstance.interceptors.request.use(
     }
 
     if (config.data instanceof FormData) {
-      delete config.headers['Content-Type'];
+      config.headers['Content-Type'] = 'multipart/form-data';
     }
 
     return config;
