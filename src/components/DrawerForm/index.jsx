@@ -42,18 +42,21 @@ const DrawerForm = ({
 
   const handleFormSubmit = async (data) => {
     setLoading(true);
+    let urls = [];
     try {
-      if (
-        showImageUpload &&
-        imageRequired &&
-        imageFiles.length < minImageCount
-      ) {
-        setImageErr('Please upload an image');
+      if (showImageUpload && imageRequired) {
+        if (!imageFiles.length) {
+          setImageErr(`Image is required`);
+        } else if (imageFiles.length < minImageCount) {
+          setImageErr(`Please upload at least ${minImageCount} image(s)`);
+        }
         setLoading(false);
         return;
       }
 
-      const urls = await uploadMultipleImages('tickets', imageFiles);
+      if (imageFiles.length > 0) {
+        urls = await uploadMultipleImages('tickets', imageFiles);
+      }
 
       await onSubmit(data, urls);
       setVisible(false);
