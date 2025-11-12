@@ -23,7 +23,6 @@ import {
   Drawer,
   Descriptions,
   Image,
-  Spin,
   Row,
   Col,
   Spin,
@@ -68,7 +67,7 @@ const Tickets = () => {
 
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [detailDrawerVisible, setDetailDrawerVisible] = useState(false);
-xwx  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [ticketDrawerVisible, setTicketDrawerVisible] = useState(false);
   const [rejectModal, setRejectModal] = useState(false);
   const [reason, setReason] = useState('');
@@ -554,7 +553,7 @@ xwx  const [detailLoading, setDetailLoading] = useState(false);
               </div>
 
               {!selectedTicket?.quotation?.approved &&
-              !selectedTicket?.quotation?.rejected ? (
+                !selectedTicket?.quotation?.rejected ? (
                 <div className="w-1/2 mx-auto flex items-center justify-between gap-4 mt-8">
                   <ThemedButton
                     text="Reject"

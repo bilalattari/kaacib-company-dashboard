@@ -47,7 +47,7 @@ const AppRouter = () => {
         <Route path="/branches" element={<Branches />} />
         <Route path="/assets" element={<Assets />} />
         <Route path="/users" element={<Users />} />
-        <Route path="/bookings" element={<Bookings />} />
+        {/* <Route path="/bookings" element={<Bookings />} /> */}
       </Route>
 
       {/* Fallback Route */}

@@ -232,12 +232,6 @@ const Assets = () => {
       placeholder: 'Enter brand name',
     },
     {
-      name: 'brand',
-      label: 'Brand (Optional)',
-      type: 'text',
-      placeholder: 'Enter brand name',
-    },
-    {
       name: 'serial_number',
       label: 'Serial Number',
       type: 'text',
