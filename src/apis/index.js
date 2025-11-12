@@ -50,7 +50,7 @@ const getTickets = async (params = {}) => {
 
 const getTicketById = async (id) => {
   const response = await axiosInstance.get(`/company/tickets/${id}`);
-  return response;
+  return response.data;
 };
 
 const approveRejectQuotation = async (id, data) => {
@@ -58,7 +58,7 @@ const approveRejectQuotation = async (id, data) => {
     `/company/tickets/${id}/quotation/approve`,
     data,
   );
-  return response;
+  return response.data;
 };
 
 const completeTicket = async (id, data = {}) => {

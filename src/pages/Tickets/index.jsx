@@ -11,6 +11,7 @@ import {
   getBranches,
   getAssets,
   getServices,
+  approveRejectQuotation,
 } from '../../apis';
 import {
   message,
@@ -23,11 +24,16 @@ import {
   Descriptions,
   Image,
   Spin,
+  Row,
+  Col,
+  Spin,
+  Modal,
 } from 'antd';
-import { PlusCircle, Eye } from 'lucide-react';
+import { PlusCircle, Eye, Loader2 } from 'lucide-react';
 import ThemedTable from '../../components/ThemedTable';
 import ThemedButton from '../../components/ThemedButton';
 import DrawerForm from '../../components/DrawerForm';
+import { set } from 'zod';
 
 const statusArr = [
   { value: 'all', label: 'All' },
@@ -37,6 +43,18 @@ const statusArr = [
   { value: 'closed', label: 'Closed' },
 ];
 
+const colors = {
+  red: 'red',
+  yellow: 'gold',
+  normal: 'green',
+  medium: 'gold',
+  high: 'red',
+};
+
+const getStatusColor = (status) => {
+  return colors[status] || 'gray';
+};
+
 const Tickets = () => {
   const [data, setData] = useState([]);
   const [contract, setContract] = useState({});
@@ -44,12 +62,17 @@ const Tickets = () => {
   const [assets, setAssets] = useState([]);
   const [services, setServices] = useState([]);
 
+  const [selectedTicket, setSelectedTicket] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [formAction, setFormAction] = useState('create');
+
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [detailDrawerVisible, setDetailDrawerVisible] = useState(false);
-  const [selectedTicket, setSelectedTicket] = useState(null);
-  const [detailLoading, setDetailLoading] = useState(false);
+xwx  const [detailLoading, setDetailLoading] = useState(false);
+  const [ticketDrawerVisible, setTicketDrawerVisible] = useState(false);
+  const [rejectModal, setRejectModal] = useState(false);
+  const [reason, setReason] = useState('');
+  const [ticketDetilsLoading, setTicketDetilsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -137,13 +160,15 @@ const Tickets = () => {
   const fetchTicketDetails = async (id) => {
     try {
       setDetailLoading(true);
+      setTicketDetilsLoading(true);
       const { data } = await getTicketById(id);
-      setSelectedTicket(data?.data?.ticket);
-      setDetailDrawerVisible(true);
+
+      setSelectedTicket(data?.ticket || null);
     } catch (err) {
       message.error(err.response?.data?.message || 'Something went wrong.');
     } finally {
       setDetailLoading(false);
+      setTicketDetilsLoading(false);
     }
   };
 
@@ -161,6 +186,28 @@ const Tickets = () => {
       return true;
     } catch (err) {
       throw err;
+    }
+  };
+
+  const handleQuotationAction = async (action) => {
+    try {
+      if (!selectedTicket || !action) return;
+
+      const data = await approveRejectQuotation(selectedTicket._id, {
+        action,
+        rejection_reason: reason,
+      });
+
+      setReason(null);
+      setRejectModal(false);
+      setTicketDrawerVisible(false);
+      message.success(`Quotation ${action}ed successfully.`);
+      fetchTickets();
+      console.log(data);
+    } catch (err) {
+      message.error(
+        err.response?.data?.message || `Failed to ${action} ticket.`,
+      );
     }
   };
 
@@ -198,15 +245,9 @@ const Tickets = () => {
       dataIndex: 'priority',
       key: 'priority',
       render: (priority) => {
-        const colors = {
-          red: 'red',
-          yellow: 'gold',
-          normal: 'green',
-          medium: 'gold',
-          high: 'red',
-        };
+        const color = getStatusColor(priority);
         return (
-          <Tag className="capitalize" color={colors[priority] || 'default'}>
+          <Tag className="capitalize" color={color}>
             {priority === 'red'
               ? 'High'
               : priority === 'yellow'
@@ -265,12 +306,15 @@ const Tickets = () => {
     {
       title: 'Actions',
       key: 'actions',
-      render: (_, record) => (
+      render: (record) => (
         <Space>
           <Eye
             size={16}
-            className="cursor-pointer theme-text hover:opacity-70"
-            onClick={() => fetchTicketDetails(record.id)}
+            onClick={() => {
+              fetchTicketDetails(record._id);
+              setTicketDrawerVisible(true);
+            }}
+            className="cursor-pointer"
           />
         </Space>
       ),
@@ -363,6 +407,20 @@ const Tickets = () => {
         />
       </ConfigProvider>
 
+      {/* Create Ticket Drawer */}
+      <DrawerForm
+        visible={drawerVisible}
+        setVisible={setDrawerVisible}
+        title="Create ticket"
+        action={formAction}
+        form={createTicketForm}
+        onSubmit={createTicket}
+        formItems={formItems}
+        showImageUpload={true}
+        imageRequired={true}
+      />
+
+      {/* Tickets Table */}
       <ThemedTable
         loading={loading}
         columns={columns}
@@ -378,243 +436,149 @@ const Tickets = () => {
         }}
       />
 
-      {/* Create Ticket Drawer */}
-      <DrawerForm
-        visible={drawerVisible}
-        setVisible={setDrawerVisible}
-        title="Create ticket"
-        action={formAction}
-        form={createTicketForm}
-        onSubmit={createTicket}
-        formItems={formItems}
-        showImageUpload={true}
-        imageRequired={true}
-      />
-
-      {/* Ticket Detail Drawer */}
       <Drawer
-        title={<p className="text-xl font-normal">Ticket Details</p>}
-        open={detailDrawerVisible}
-        onClose={() => {
-          setDetailDrawerVisible(false);
-          setSelectedTicket(null);
-        }}
+        title="Ticket Details"
         width={800}
-        closable={true}
+        open={ticketDrawerVisible}
+        onClose={() => {
+          setTicketDrawerVisible(false);
+          setSelectedTicket((_) => null);
+        }}
       >
-        {detailLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <Spin size="large" />
-          </div>
-        ) : selectedTicket ? (
-          <div className="flex flex-col gap-6">
-            {/* Header Section */}
-            <div className="flex items-center justify-between border-b pb-4">
-              <div>
-                <h2 className="text-2xl font-semibold theme-text">
-                  {selectedTicket.ticket_number || 'N/A'}
-                </h2>
-                <p className="text-gray-500 text-sm mt-1">
-                  {selectedTicket.createdAt
-                    ? format(parseISO(selectedTicket.createdAt), 'dd MMM, yyyy HH:mm')
-                    : '—'}
-                </p>
-              </div>
-              <Space>
-                <Tag
-                  className="capitalize"
-                  color={
-                    selectedTicket.priority === 'red' || selectedTicket.priority === 'high'
-                      ? 'red'
-                      : selectedTicket.priority === 'yellow' ||
-                          selectedTicket.priority === 'medium'
-                        ? 'gold'
-                        : 'green'
-                  }
-                >
-                  {selectedTicket.priority === 'red'
-                    ? 'High'
-                    : selectedTicket.priority === 'yellow'
-                      ? 'Medium'
-                      : selectedTicket.priority || 'Normal'}
-                </Tag>
-                <Tag
-                  color={
-                    selectedTicket.status === 'assigned'
-                      ? 'blue'
-                      : selectedTicket.status === 'completed' ||
-                          selectedTicket.status === 'closed'
-                        ? 'green'
-                        : selectedTicket.status === 'quotation_pending'
-                          ? 'orange'
-                          : 'volcano'
-                  }
-                >
-                  {selectedTicket.status
-                    ? selectedTicket.status.toUpperCase().replace('_', ' ')
-                    : '—'}
-                </Tag>
-              </Space>
+        <Modal
+          open={rejectModal}
+          onCancel={() => setRejectModal(false)}
+          title="Reject Quotation"
+          footer={null}
+        >
+          <div className="text-lg my-4">
+            <input
+              type="text"
+              placeholder="Enter reason of rejection"
+              className="w-full p-2 border-2 theme-border rounded-md"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+            <div className="w-full mx-auto flex items-center justify-between gap-4 mt-8">
+              <ThemedButton
+                text="Cancel"
+                variant="outlined"
+                onClick={() => setRejectModal(true)}
+                className="w-1/2"
+              />
+              <ThemedButton
+                text="Confirm"
+                onClick={() => handleQuotationAction('reject')}
+                className="w-1/2"
+              />
             </div>
+          </div>
+        </Modal>
 
-            {/* Details Section */}
-            <Descriptions
-              column={1}
-              bordered
-              className="w-full"
-              labelStyle={{
-                fontWeight: 600,
-                width: '200px',
-                backgroundColor: '#fafafa',
-              }}
-            >
-              <Descriptions.Item label="Service">
-                {selectedTicket.service?.title?.en ||
-                  selectedTicket.service?.name ||
-                  '—'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Branch">
-                <div>
-                  <div className="font-medium">
-                    {selectedTicket.branch?.name || '—'}
-                  </div>
-                  {selectedTicket.branch?.city && (
-                    <div className="text-sm text-gray-500">
-                      {selectedTicket.branch.city}
-                    </div>
-                  )}
-                  {selectedTicket.branch?.address && (
-                    <div className="text-sm text-gray-500">
-                      {selectedTicket.branch.address}
-                    </div>
-                  )}
-                </div>
-              </Descriptions.Item>
-              <Descriptions.Item label="Asset">
-                {selectedTicket.asset?.name || '—'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Scheduled Date">
-                {selectedTicket.scheduled_date
-                  ? format(parseISO(selectedTicket.scheduled_date), 'dd MMM, yyyy')
-                  : '—'}
-              </Descriptions.Item>
-              <Descriptions.Item label="Description">
-                <div className="whitespace-pre-wrap">
-                  {selectedTicket.description || '—'}
-                </div>
-              </Descriptions.Item>
-              {selectedTicket.worker && (
-                <Descriptions.Item label="Assigned Worker">
-                  <div>
-                    <div className="font-medium">
-                      {selectedTicket.worker?.name || '—'}
-                    </div>
-                    {selectedTicket.worker?.email && (
-                      <div className="text-sm text-gray-500">
-                        {selectedTicket.worker.email}
-                      </div>
-                    )}
-                    {selectedTicket.worker?.phone && (
-                      <div className="text-sm text-gray-500">
-                        {selectedTicket.worker.phone}
-                      </div>
-                    )}
-                  </div>
-                </Descriptions.Item>
-              )}
-              {selectedTicket.quotation && (
-                <Descriptions.Item label="Quotation">
-                  <div>
-                    <div className="font-medium">
-                      Amount: {selectedTicket.quotation?.amount || '—'}
-                    </div>
-                    {selectedTicket.quotation?.status && (
-                      <Tag
-                        color={
-                          selectedTicket.quotation.status === 'approved'
-                            ? 'green'
-                            : selectedTicket.quotation.status === 'rejected'
-                              ? 'red'
-                              : 'orange'
-                        }
-                      >
-                        {selectedTicket.quotation.status.toUpperCase()}
-                      </Tag>
-                    )}
-                  </div>
-                </Descriptions.Item>
-              )}
-              {selectedTicket.completedAt && (
-                <Descriptions.Item label="Completed Date">
-                  {format(
-                    parseISO(selectedTicket.completedAt),
-                    'dd MMM, yyyy HH:mm',
-                  )}
-                </Descriptions.Item>
-              )}
-              {selectedTicket.updatedAt && (
-                <Descriptions.Item label="Last Updated">
-                  {format(
-                    parseISO(selectedTicket.updatedAt),
-                    'dd MMM, yyyy HH:mm',
-                  )}
-                </Descriptions.Item>
-              )}
-            </Descriptions>
-
-            {/* Images Section */}
-            {selectedTicket.images && selectedTicket.images.length > 0 && (
-              <div className="flex flex-col gap-2">
-                <h3 className="text-lg font-semibold theme-text">Images</h3>
-                <Image.PreviewGroup>
-                  <div className="grid grid-cols-2 gap-4">
-                    {selectedTicket.images.map((image, index) => (
-                      <Image
-                        key={index}
-                        src={image}
-                        alt={`Ticket image ${index + 1}`}
-                        className="rounded-md"
-                        style={{ objectFit: 'cover' }}
-                      />
-                    ))}
-                  </div>
-                </Image.PreviewGroup>
-              </div>
-            )}
-
-            {/* Notes Section */}
-            {selectedTicket.notes && selectedTicket.notes.length > 0 && (
-              <div className="flex flex-col gap-2">
-                <h3 className="text-lg font-semibold theme-text">Notes</h3>
-                <div className="flex flex-col gap-3">
-                  {selectedTicket.notes.map((note, index) => (
-                    <div
-                      key={index}
-                      className="border rounded-md p-3 bg-gray-50"
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-sm font-medium">
-                          {note.createdBy?.name || 'System'}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {note.createdAt
-                            ? format(parseISO(note.createdAt), 'dd MMM, yyyy HH:mm')
-                            : '—'}
-                        </span>
-                      </div>
-                      <p className="text-sm whitespace-pre-wrap">
-                        {note.note || note.content || '—'}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+        {ticketDetilsLoading ? (
+          <div className="w-full h-full flex items-center justify-center">
+            <Loader2 className="animate-spin theme-text size-12" />
           </div>
         ) : (
-          <div className="flex justify-center items-center h-64">
-            <p className="text-gray-500">No ticket data available</p>
-          </div>
+          <>
+            <Row gutter={[16, 16]}>
+              <Col span={12}>
+                <p className="font-semibold text-lg">
+                  Priority:
+                  <Tag
+                    color={getStatusColor(selectedTicket?.priority)}
+                    className="uppercase ml-2! font-normal"
+                  >
+                    {selectedTicket?.priority}
+                  </Tag>
+                </p>
+              </Col>
+              <Col span={12}>
+                <p className="font-semibold text-lg">
+                  Branch:
+                  <span className="capitalize ml-2! font-normal">
+                    {selectedTicket?.branch?.name}
+                  </span>
+                </p>
+              </Col>
+              <Col span={12}>
+                <p className="font-semibold text-lg">
+                  Asset:
+                  <span className="capitalize ml-2! font-normal">
+                    {selectedTicket?.asset?.name || 'N/A'}
+                  </span>
+                </p>
+              </Col>
+              <Col span={12}>
+                <p className="font-semibold text-lg">
+                  Service:
+                  <span className="capitalize ml-2! font-normal">
+                    {selectedTicket?.service?.title?.en || 'N/A'}
+                  </span>
+                </p>
+              </Col>
+            </Row>
+
+            <div className="w-4/5 mx-auto mt-8 py-8 border-2 border-gray-400 rounded-md">
+              <p className="font-bold text-xl text-center mb-8">
+                Quotation Details
+              </p>
+
+              <div className="w-3/5 mx-auto">
+                <p className="flex items-center justify-between font-medium text-lg">
+                  Labor Cost
+                  <span>{selectedTicket?.quotation?.labor_cost || 0}</span>
+                </p>
+                <p className="flex items-center justify-between font-medium text-lg">
+                  Material Cost
+                  <span>{selectedTicket?.quotation?.materials_cost || 0}</span>
+                </p>
+                <p className="flex items-center justify-between font-medium text-lg">
+                  Materials Needed
+                  <span>
+                    {selectedTicket?.quotation?.materials_needed?.length || 0}
+                  </span>
+                </p>
+                <p className="flex items-center justify-between font-medium text-lg">
+                  Materials Provider
+                  <span className="capitalize">
+                    {selectedTicket?.quotation?.materials_provided_by || 'N/A'}
+                  </span>
+                </p>
+                <p className="flex items-center justify-between font-medium text-lg">
+                  Total Cost
+                  <span className="capitalize">
+                    {selectedTicket?.quotation?.total_cost || 0}
+                  </span>
+                </p>
+              </div>
+
+              {!selectedTicket?.quotation?.approved &&
+              !selectedTicket?.quotation?.rejected ? (
+                <div className="w-1/2 mx-auto flex items-center justify-between gap-4 mt-8">
+                  <ThemedButton
+                    text="Reject"
+                    variant="outlined"
+                    onClick={() => setRejectModal(true)}
+                    className="w-1/2"
+                  />
+                  <ThemedButton
+                    text="Approve"
+                    onClick={() => handleQuotationAction('approve')}
+                    className="w-1/2"
+                  />
+                </div>
+              ) : (
+                <div className="w-1/2 mx-auto mt-8 p-2 rounded-md text-center theme-text border-2 theme-border">
+                  <p>
+                    {selectedTicket?.quotation?.approved
+                      ? 'Approved'
+                      : 'Rejected'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </>
         )}
       </Drawer>
     </div>
