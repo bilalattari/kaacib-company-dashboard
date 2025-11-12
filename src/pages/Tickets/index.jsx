@@ -10,6 +10,7 @@ import {
   getCompanyInfo,
   getBranches,
   getAssets,
+  approveRejectQuotation,
 } from '../../apis';
 import {
   Divider,
@@ -20,11 +21,17 @@ import {
   Space,
   Tabs,
   ConfigProvider,
+  Drawer,
+  Row,
+  Col,
+  Spin,
+  Modal,
 } from 'antd';
-import { PlusCircle, Eye } from 'lucide-react';
+import { PlusCircle, Eye, Loader2 } from 'lucide-react';
 import ThemedTable from '../../components/ThemedTable';
 import ThemedButton from '../../components/ThemedButton';
 import DrawerForm from '../../components/DrawerForm';
+import { set } from 'zod';
 
 const statusArr = [
   { value: 'all', label: 'All' },
@@ -34,6 +41,18 @@ const statusArr = [
   { value: 'closed', label: 'Closed' },
 ];
 
+const colors = {
+  red: 'red',
+  yellow: 'gold',
+  normal: 'green',
+  medium: 'gold',
+  high: 'red',
+};
+
+const getStatusColor = (status) => {
+  return colors[status] || 'gray';
+};
+
 const Tickets = () => {
   const [data, setData] = useState([]);
   const [contract, setContract] = useState({});
@@ -41,9 +60,15 @@ const Tickets = () => {
   const [assets, setAssets] = useState([]);
   const [services, setServices] = useState([]);
 
+  const [selectedTicket, setSelectedTicket] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
   const [formAction, setFormAction] = useState('create');
+
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [ticketDrawerVisible, setTicketDrawerVisible] = useState(false);
+  const [rejectModal, setRejectModal] = useState(false);
+  const [reason, setReason] = useState('');
+  const [ticketDetilsLoading, setTicketDetilsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -118,14 +143,14 @@ const Tickets = () => {
 
   const fetchTicketDetails = async (id) => {
     try {
-      setLoading(true);
+      setTicketDetilsLoading(true);
       const { data } = await getTicketById(id);
-      setSelectedTicket(data?.data?.ticket);
-      setDetailDrawerVisible(true);
+
+      setSelectedTicket(data?.ticket || null);
     } catch (err) {
       message.error(err.response?.data?.message || 'Something went wrong.');
     } finally {
-      setLoading(false);
+      setTicketDetilsLoading(false);
     }
   };
 
@@ -143,6 +168,28 @@ const Tickets = () => {
       return true;
     } catch (err) {
       throw err;
+    }
+  };
+
+  const handleQuotationAction = async (action) => {
+    try {
+      if (!selectedTicket || !action) return;
+
+      const data = await approveRejectQuotation(selectedTicket._id, {
+        action,
+        rejection_reason: reason,
+      });
+
+      setReason(null);
+      setRejectModal(false);
+      setTicketDrawerVisible(false);
+      message.success(`Quotation ${action}ed successfully.`);
+      fetchTickets();
+      console.log(data);
+    } catch (err) {
+      message.error(
+        err.response?.data?.message || `Failed to ${action} ticket.`,
+      );
     }
   };
 
@@ -180,15 +227,9 @@ const Tickets = () => {
       dataIndex: 'priority',
       key: 'priority',
       render: (priority) => {
-        const colors = {
-          red: 'red',
-          yellow: 'gold',
-          normal: 'green',
-          medium: 'gold',
-          high: 'red',
-        };
+        const color = getStatusColor(priority);
         return (
-          <Tag className="capitalize" color={colors[priority] || 'default'}>
+          <Tag className="capitalize" color={color}>
             {priority === 'red'
               ? 'High'
               : priority === 'yellow'
@@ -247,9 +288,16 @@ const Tickets = () => {
     {
       title: 'Actions',
       key: 'actions',
-      render: () => (
+      render: (record) => (
         <Space>
-          <Eye size={16} />
+          <Eye
+            size={16}
+            onClick={() => {
+              fetchTicketDetails(record._id);
+              setTicketDrawerVisible(true);
+            }}
+            className="cursor-pointer"
+          />
         </Space>
       ),
     },
@@ -341,6 +389,20 @@ const Tickets = () => {
         />
       </ConfigProvider>
 
+      {/* Create Ticket Drawer */}
+      <DrawerForm
+        visible={drawerVisible}
+        setVisible={setDrawerVisible}
+        title="Create ticket"
+        action={formAction}
+        form={createTicketForm}
+        onSubmit={createTicket}
+        formItems={formItems}
+        showImageUpload={true}
+        imageRequired={true}
+      />
+
+      {/* Tickets Table */}
       <ThemedTable
         loading={loading}
         columns={columns}
@@ -356,18 +418,151 @@ const Tickets = () => {
         }}
       />
 
-      {/* Create Ticket Drawer */}
-      <DrawerForm
-        visible={drawerVisible}
-        setVisible={setDrawerVisible}
-        title="Create ticket"
-        action={formAction}
-        form={createTicketForm}
-        onSubmit={createTicket}
-        formItems={formItems}
-        showImageUpload={true}
-        imageRequired={true}
-      />
+      <Drawer
+        title="Ticket Details"
+        width={800}
+        open={ticketDrawerVisible}
+        onClose={() => {
+          setTicketDrawerVisible(false);
+          setSelectedTicket((_) => null);
+        }}
+      >
+        <Modal
+          open={rejectModal}
+          onCancel={() => setRejectModal(false)}
+          title="Reject Quotation"
+          footer={null}
+        >
+          <div className="text-lg my-4">
+            <input
+              type="text"
+              placeholder="Enter reason of rejection"
+              className="w-full p-2 border-2 theme-border rounded-md"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+            />
+            <div className="w-full mx-auto flex items-center justify-between gap-4 mt-8">
+              <ThemedButton
+                text="Cancel"
+                variant="outlined"
+                onClick={() => setRejectModal(true)}
+                className="w-1/2"
+              />
+              <ThemedButton
+                text="Confirm"
+                onClick={() => handleQuotationAction('reject')}
+                className="w-1/2"
+              />
+            </div>
+          </div>
+        </Modal>
+
+        {ticketDetilsLoading ? (
+          <div className="w-full h-full flex items-center justify-center">
+            <Loader2 className="animate-spin theme-text size-12" />
+          </div>
+        ) : (
+          <>
+            <Row gutter={[16, 16]}>
+              <Col span={12}>
+                <p className="font-semibold text-lg">
+                  Priority:
+                  <Tag
+                    color={getStatusColor(selectedTicket?.priority)}
+                    className="uppercase ml-2! font-normal"
+                  >
+                    {selectedTicket?.priority}
+                  </Tag>
+                </p>
+              </Col>
+              <Col span={12}>
+                <p className="font-semibold text-lg">
+                  Branch:
+                  <span className="capitalize ml-2! font-normal">
+                    {selectedTicket?.branch?.name}
+                  </span>
+                </p>
+              </Col>
+              <Col span={12}>
+                <p className="font-semibold text-lg">
+                  Asset:
+                  <span className="capitalize ml-2! font-normal">
+                    {selectedTicket?.asset?.name || 'N/A'}
+                  </span>
+                </p>
+              </Col>
+              <Col span={12}>
+                <p className="font-semibold text-lg">
+                  Service:
+                  <span className="capitalize ml-2! font-normal">
+                    {selectedTicket?.service?.title?.en || 'N/A'}
+                  </span>
+                </p>
+              </Col>
+            </Row>
+
+            <div className="w-4/5 mx-auto mt-8 py-8 border-2 border-gray-400 rounded-md">
+              <p className="font-bold text-xl text-center mb-8">
+                Quotation Details
+              </p>
+
+              <div className="w-3/5 mx-auto">
+                <p className="flex items-center justify-between font-medium text-lg">
+                  Labor Cost
+                  <span>{selectedTicket?.quotation?.labor_cost || 0}</span>
+                </p>
+                <p className="flex items-center justify-between font-medium text-lg">
+                  Material Cost
+                  <span>{selectedTicket?.quotation?.materials_cost || 0}</span>
+                </p>
+                <p className="flex items-center justify-between font-medium text-lg">
+                  Materials Needed
+                  <span>
+                    {selectedTicket?.quotation?.materials_needed?.length || 0}
+                  </span>
+                </p>
+                <p className="flex items-center justify-between font-medium text-lg">
+                  Materials Provider
+                  <span className="capitalize">
+                    {selectedTicket?.quotation?.materials_provided_by || 'N/A'}
+                  </span>
+                </p>
+                <p className="flex items-center justify-between font-medium text-lg">
+                  Total Cost
+                  <span className="capitalize">
+                    {selectedTicket?.quotation?.total_cost || 0}
+                  </span>
+                </p>
+              </div>
+
+              {!selectedTicket?.quotation?.approved &&
+              !selectedTicket?.quotation?.rejected ? (
+                <div className="w-1/2 mx-auto flex items-center justify-between gap-4 mt-8">
+                  <ThemedButton
+                    text="Reject"
+                    variant="outlined"
+                    onClick={() => setRejectModal(true)}
+                    className="w-1/2"
+                  />
+                  <ThemedButton
+                    text="Approve"
+                    onClick={() => handleQuotationAction('approve')}
+                    className="w-1/2"
+                  />
+                </div>
+              ) : (
+                <div className="w-1/2 mx-auto mt-8 p-2 rounded-md text-center theme-text border-2 theme-border">
+                  <p>
+                    {selectedTicket?.quotation?.approved
+                      ? 'Approved'
+                      : 'Rejected'}
+                  </p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+      </Drawer>
     </div>
   );
 };
