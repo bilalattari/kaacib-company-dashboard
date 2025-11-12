@@ -242,6 +242,12 @@ const getContracts = async () => {
   return response;
 };
 
+// ==================== Global Services APIs ====================
+const getServices = async (params = {}) => {
+  const response = await axiosInstance.get('/global/services', { params });
+  return response;
+};
+
 // ==================== Image Upload APIs ====================
 const uploadMultipleImages = async (folderName, imageList) => {
   const formData = new FormData();
@@ -309,6 +315,8 @@ export {
   getWorkers,
   //Contracts
   getContracts,
+  // Global Services
+  getServices,
   // Image Upload
   uploadMultipleImages,
 };

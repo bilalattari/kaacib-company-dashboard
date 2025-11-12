@@ -10,16 +10,19 @@ import {
   getCompanyInfo,
   getBranches,
   getAssets,
+  getServices,
 } from '../../apis';
 import {
-  Divider,
   message,
   Tag,
   Tooltip,
-  Button,
   Space,
   Tabs,
   ConfigProvider,
+  Drawer,
+  Descriptions,
+  Image,
+  Spin,
 } from 'antd';
 import { PlusCircle, Eye } from 'lucide-react';
 import ThemedTable from '../../components/ThemedTable';
@@ -44,6 +47,9 @@ const Tickets = () => {
   const [filterStatus, setFilterStatus] = useState('all');
   const [formAction, setFormAction] = useState('create');
   const [drawerVisible, setDrawerVisible] = useState(false);
+  const [detailDrawerVisible, setDetailDrawerVisible] = useState(false);
+  const [selectedTicket, setSelectedTicket] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -63,6 +69,7 @@ const Tickets = () => {
     fetchInfo();
     fetchBranches();
     fetchAssets();
+    fetchServices();
   }, [pagination.current, pagination.pageSize, filterStatus]);
 
   const fetchTickets = async () => {
@@ -78,6 +85,8 @@ const Tickets = () => {
         ...prev,
         total: res?.data?.pagination?.total || res?.data?.tickets?.length || 0,
       }));
+      setLoading(false);
+
     } catch (err) {
       message.error(err.response?.data?.message || 'Something went wrong.');
     } finally {
@@ -88,10 +97,19 @@ const Tickets = () => {
   const fetchInfo = async () => {
     try {
       const { data } = await getCompanyInfo();
-      setContract(data?.data?.contracts[0] || {});
-      setServices(data?.data?.contracts[0]?.services || []);
+      setContract(data?.data?.contracts?.[0] || {});
     } catch (err) {
       console.error('Error fetching company details =>', err);
+      message.error(err.response?.data?.message || 'Something went wrong.');
+    }
+  };
+
+  const fetchServices = async () => {
+    try {
+      const { data } = await getServices();
+      setServices(data?.data || []);
+    } catch (err) {
+      console.error('Error fetching services =>', err);
       message.error(err.response?.data?.message || 'Something went wrong.');
     }
   };
@@ -118,14 +136,14 @@ const Tickets = () => {
 
   const fetchTicketDetails = async (id) => {
     try {
-      setLoading(true);
+      setDetailLoading(true);
       const { data } = await getTicketById(id);
       setSelectedTicket(data?.data?.ticket);
       setDetailDrawerVisible(true);
     } catch (err) {
       message.error(err.response?.data?.message || 'Something went wrong.');
     } finally {
-      setLoading(false);
+      setDetailLoading(false);
     }
   };
 
@@ -192,8 +210,8 @@ const Tickets = () => {
             {priority === 'red'
               ? 'High'
               : priority === 'yellow'
-              ? 'Medium'
-              : priority}
+                ? 'Medium'
+                : priority}
           </Tag>
         );
       },
@@ -207,10 +225,10 @@ const Tickets = () => {
           status === 'assigned'
             ? 'blue'
             : status === 'completed' || status === 'closed'
-            ? 'green'
-            : status === 'quotation_pending'
-            ? 'orange'
-            : 'volcano';
+              ? 'green'
+              : status === 'quotation_pending'
+                ? 'orange'
+                : 'volcano';
         return (
           <Tag color={color}>{status.toUpperCase().replace('_', ' ')}</Tag>
         );
@@ -247,9 +265,13 @@ const Tickets = () => {
     {
       title: 'Actions',
       key: 'actions',
-      render: () => (
+      render: (_, record) => (
         <Space>
-          <Eye size={16} />
+          <Eye
+            size={16}
+            className="cursor-pointer theme-text hover:opacity-70"
+            onClick={() => fetchTicketDetails(record.id)}
+          />
         </Space>
       ),
     },
@@ -368,6 +390,233 @@ const Tickets = () => {
         showImageUpload={true}
         imageRequired={true}
       />
+
+      {/* Ticket Detail Drawer */}
+      <Drawer
+        title={<p className="text-xl font-normal">Ticket Details</p>}
+        open={detailDrawerVisible}
+        onClose={() => {
+          setDetailDrawerVisible(false);
+          setSelectedTicket(null);
+        }}
+        width={800}
+        closable={true}
+      >
+        {detailLoading ? (
+          <div className="flex justify-center items-center h-64">
+            <Spin size="large" />
+          </div>
+        ) : selectedTicket ? (
+          <div className="flex flex-col gap-6">
+            {/* Header Section */}
+            <div className="flex items-center justify-between border-b pb-4">
+              <div>
+                <h2 className="text-2xl font-semibold theme-text">
+                  {selectedTicket.ticket_number || 'N/A'}
+                </h2>
+                <p className="text-gray-500 text-sm mt-1">
+                  {selectedTicket.createdAt
+                    ? format(parseISO(selectedTicket.createdAt), 'dd MMM, yyyy HH:mm')
+                    : '—'}
+                </p>
+              </div>
+              <Space>
+                <Tag
+                  className="capitalize"
+                  color={
+                    selectedTicket.priority === 'red' || selectedTicket.priority === 'high'
+                      ? 'red'
+                      : selectedTicket.priority === 'yellow' ||
+                          selectedTicket.priority === 'medium'
+                        ? 'gold'
+                        : 'green'
+                  }
+                >
+                  {selectedTicket.priority === 'red'
+                    ? 'High'
+                    : selectedTicket.priority === 'yellow'
+                      ? 'Medium'
+                      : selectedTicket.priority || 'Normal'}
+                </Tag>
+                <Tag
+                  color={
+                    selectedTicket.status === 'assigned'
+                      ? 'blue'
+                      : selectedTicket.status === 'completed' ||
+                          selectedTicket.status === 'closed'
+                        ? 'green'
+                        : selectedTicket.status === 'quotation_pending'
+                          ? 'orange'
+                          : 'volcano'
+                  }
+                >
+                  {selectedTicket.status
+                    ? selectedTicket.status.toUpperCase().replace('_', ' ')
+                    : '—'}
+                </Tag>
+              </Space>
+            </div>
+
+            {/* Details Section */}
+            <Descriptions
+              column={1}
+              bordered
+              className="w-full"
+              labelStyle={{
+                fontWeight: 600,
+                width: '200px',
+                backgroundColor: '#fafafa',
+              }}
+            >
+              <Descriptions.Item label="Service">
+                {selectedTicket.service?.title?.en ||
+                  selectedTicket.service?.name ||
+                  '—'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Branch">
+                <div>
+                  <div className="font-medium">
+                    {selectedTicket.branch?.name || '—'}
+                  </div>
+                  {selectedTicket.branch?.city && (
+                    <div className="text-sm text-gray-500">
+                      {selectedTicket.branch.city}
+                    </div>
+                  )}
+                  {selectedTicket.branch?.address && (
+                    <div className="text-sm text-gray-500">
+                      {selectedTicket.branch.address}
+                    </div>
+                  )}
+                </div>
+              </Descriptions.Item>
+              <Descriptions.Item label="Asset">
+                {selectedTicket.asset?.name || '—'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Scheduled Date">
+                {selectedTicket.scheduled_date
+                  ? format(parseISO(selectedTicket.scheduled_date), 'dd MMM, yyyy')
+                  : '—'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Description">
+                <div className="whitespace-pre-wrap">
+                  {selectedTicket.description || '—'}
+                </div>
+              </Descriptions.Item>
+              {selectedTicket.worker && (
+                <Descriptions.Item label="Assigned Worker">
+                  <div>
+                    <div className="font-medium">
+                      {selectedTicket.worker?.name || '—'}
+                    </div>
+                    {selectedTicket.worker?.email && (
+                      <div className="text-sm text-gray-500">
+                        {selectedTicket.worker.email}
+                      </div>
+                    )}
+                    {selectedTicket.worker?.phone && (
+                      <div className="text-sm text-gray-500">
+                        {selectedTicket.worker.phone}
+                      </div>
+                    )}
+                  </div>
+                </Descriptions.Item>
+              )}
+              {selectedTicket.quotation && (
+                <Descriptions.Item label="Quotation">
+                  <div>
+                    <div className="font-medium">
+                      Amount: {selectedTicket.quotation?.amount || '—'}
+                    </div>
+                    {selectedTicket.quotation?.status && (
+                      <Tag
+                        color={
+                          selectedTicket.quotation.status === 'approved'
+                            ? 'green'
+                            : selectedTicket.quotation.status === 'rejected'
+                              ? 'red'
+                              : 'orange'
+                        }
+                      >
+                        {selectedTicket.quotation.status.toUpperCase()}
+                      </Tag>
+                    )}
+                  </div>
+                </Descriptions.Item>
+              )}
+              {selectedTicket.completedAt && (
+                <Descriptions.Item label="Completed Date">
+                  {format(
+                    parseISO(selectedTicket.completedAt),
+                    'dd MMM, yyyy HH:mm',
+                  )}
+                </Descriptions.Item>
+              )}
+              {selectedTicket.updatedAt && (
+                <Descriptions.Item label="Last Updated">
+                  {format(
+                    parseISO(selectedTicket.updatedAt),
+                    'dd MMM, yyyy HH:mm',
+                  )}
+                </Descriptions.Item>
+              )}
+            </Descriptions>
+
+            {/* Images Section */}
+            {selectedTicket.images && selectedTicket.images.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <h3 className="text-lg font-semibold theme-text">Images</h3>
+                <Image.PreviewGroup>
+                  <div className="grid grid-cols-2 gap-4">
+                    {selectedTicket.images.map((image, index) => (
+                      <Image
+                        key={index}
+                        src={image}
+                        alt={`Ticket image ${index + 1}`}
+                        className="rounded-md"
+                        style={{ objectFit: 'cover' }}
+                      />
+                    ))}
+                  </div>
+                </Image.PreviewGroup>
+              </div>
+            )}
+
+            {/* Notes Section */}
+            {selectedTicket.notes && selectedTicket.notes.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <h3 className="text-lg font-semibold theme-text">Notes</h3>
+                <div className="flex flex-col gap-3">
+                  {selectedTicket.notes.map((note, index) => (
+                    <div
+                      key={index}
+                      className="border rounded-md p-3 bg-gray-50"
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">
+                          {note.createdBy?.name || 'System'}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          {note.createdAt
+                            ? format(parseISO(note.createdAt), 'dd MMM, yyyy HH:mm')
+                            : '—'}
+                        </span>
+                      </div>
+                      <p className="text-sm whitespace-pre-wrap">
+                        {note.note || note.content || '—'}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex justify-center items-center h-64">
+            <p className="text-gray-500">No ticket data available</p>
+          </div>
+        )}
+      </Drawer>
     </div>
   );
 };

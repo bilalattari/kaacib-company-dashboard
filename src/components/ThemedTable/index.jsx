@@ -1,7 +1,7 @@
 import { Table, Skeleton } from 'antd';
 
 const ThemedTable = ({ columns, data, summary, loading, pagination }) => {
-  const pageSize = pagination?.pageSize || 10;
+  const pageSize = 8;
 
   // Grab real data keys from columns
   const columnKeys = columns.map(

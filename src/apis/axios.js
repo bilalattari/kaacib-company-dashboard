@@ -5,7 +5,7 @@ if (process.env.NODE_ENV === 'development') {
 } else {
   URL = process.env.VITE_BASE_URL;
 }
-URL = 'https://api.kaacib.com';
+URL = 'http://localhost:5005';
 
 const getAuthToken = () => {
   const userData = JSON.parse(localStorage.getItem('user___token'));

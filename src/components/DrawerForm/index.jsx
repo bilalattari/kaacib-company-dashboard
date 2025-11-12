@@ -42,16 +42,19 @@ const DrawerForm = ({
 
   const handleFormSubmit = async (data) => {
     setLoading(true);
+    setImageErr(null);
     let urls = [];
     try {
       if (showImageUpload && imageRequired) {
         if (!imageFiles.length) {
           setImageErr(`Image is required`);
+          setLoading(false);
+          return;
         } else if (imageFiles.length < minImageCount) {
           setImageErr(`Please upload at least ${minImageCount} image(s)`);
+          setLoading(false);
+          return;
         }
-        setLoading(false);
-        return;
       }
 
       if (imageFiles.length > 0) {
@@ -61,6 +64,8 @@ const DrawerForm = ({
       await onSubmit(data, urls);
       setVisible(false);
       reset();
+      setImageFiles([]);
+      setImageErr(null);
     } catch (error) {
       message.error(error.response?.data?.message || 'Something went wrong.');
       console.error('Form submission error:', error);
@@ -73,7 +78,12 @@ const DrawerForm = ({
     <Drawer
       title={<p className="text-xl font-normal">{title}</p>}
       open={visible}
-      onClose={() => setVisible(false)}
+      onClose={() => {
+        setVisible(false);
+        reset();
+        setImageFiles([]);
+        setImageErr(null);
+      }}
       closable={false}
       width={800}
       extra={
