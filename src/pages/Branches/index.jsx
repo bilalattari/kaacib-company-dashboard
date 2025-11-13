@@ -1,7 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { createBranch as createBranchApi, getBranches } from '../../apis';
+import {
+  createBranch as createBranchApi,
+  getBranches,
+  updateBranch,
+} from '../../apis';
 import { createBranchSchema } from '../../helpers/schema';
 import { PlusCircle, Edit, Trash2, Eye } from 'lucide-react';
 import { message, Tag, Tooltip, Button, Space, Popconfirm } from 'antd';
@@ -10,10 +14,11 @@ import ThemedButton from '../../components/ThemedButton';
 import DrawerForm from '../../components/DrawerForm';
 
 const Branches = () => {
-  const [loading, setLoading] = useState(false);
-  const [drawerVisible, setDrawerVisible] = useState(false);
   const [data, setData] = useState([]);
-  const [editingBranch, setEditingBranch] = useState(null);
+  const [selectedBranchId, setSelectedBranchId] = useState({});
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(null);
+  const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -58,6 +63,68 @@ const Branches = () => {
       throw err;
     }
   };
+
+  const editBranch = async (data) => {
+    if (!selectedBranchId) return;
+    try {
+      await updateBranch(selectedBranchId, data);
+      fetchBranches();
+      message.success('Branch updated successfully.');
+      return true;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
+
+  const formItems = [
+    {
+      name: 'name',
+      label: 'Branch Name',
+      type: 'text',
+      placeholder: 'Enter branch name',
+    },
+    {
+      name: 'city',
+      label: 'City',
+      type: 'text',
+      placeholder: 'Enter city',
+    },
+    {
+      name: 'area',
+      label: 'Area',
+      type: 'text',
+      placeholder: 'Enter area',
+    },
+    {
+      name: 'address',
+      label: 'Address',
+      type: 'textarea',
+      placeholder: 'Enter branch address',
+    },
+    {
+      name: 'phone',
+      label: 'Phone Number',
+      type: 'text',
+      placeholder: 'Enter phone number',
+    },
+    {
+      name: 'map_link',
+      label: 'Google Map Link',
+      type: 'text',
+      placeholder: 'Enter google map link',
+    },
+    {
+      name: 'status',
+      label: 'Status',
+      type: 'select',
+      placeholder: 'Select status',
+      options: [
+        { value: 'active', label: 'Active' },
+        { value: 'inactive', label: 'Inactive' },
+      ],
+    },
+  ];
 
   const columns = [
     {
@@ -128,18 +195,16 @@ const Branches = () => {
       render: (_, record) => (
         <Space>
           <Tooltip title="View Details">
-            <Button
-              type="link"
-              icon={<Eye size={16} />}
-              onClick={() => fetchBranchDetails(record.id)}
-            />
+            <Button type="link" icon={<Eye size={16} />} />
           </Tooltip>
           <Tooltip title="Edit">
             <Button
               type="link"
               icon={<Edit size={16} />}
               onClick={() => {
-                setEditingBranch(record);
+                setSelectedBranchId(record._id);
+                setIsEditMode(true);
+                createBranchForm.reset(record);
                 setDrawerVisible(true);
               }}
             />
@@ -159,55 +224,6 @@ const Branches = () => {
     },
   ];
 
-  const formItems = [
-    {
-      name: 'name',
-      label: 'Branch Name',
-      type: 'text',
-      placeholder: 'Enter branch name',
-    },
-    {
-      name: 'city',
-      label: 'City',
-      type: 'text',
-      placeholder: 'Enter city',
-    },
-    {
-      name: 'area',
-      label: 'Area',
-      type: 'text',
-      placeholder: 'Enter area',
-    },
-    {
-      name: 'address',
-      label: 'Address',
-      type: 'textarea',
-      placeholder: 'Enter branch address',
-    },
-    {
-      name: 'phone',
-      label: 'Phone Number',
-      type: 'text',
-      placeholder: 'Enter phone number',
-    },
-    {
-      name: 'map_link',
-      label: 'Google Map Link',
-      type: 'text',
-      placeholder: 'Enter google map link',
-    },
-    {
-      name: 'status',
-      label: 'Status',
-      type: 'select',
-      placeholder: 'Select status',
-      options: [
-        { value: 'active', label: 'Active' },
-        { value: 'inactive', label: 'Inactive' },
-      ],
-    },
-  ];
-
   return (
     <div className="w-full h-full px-4">
       <div className="w-full flex-content-right py-4">
@@ -215,7 +231,17 @@ const Branches = () => {
           text="Create Branch"
           icon={<PlusCircle />}
           onClick={() => {
-            setEditingBranch(null);
+            setIsEditMode(false);
+            setSelectedBranchId(null);
+            createBranchForm.reset({
+              name: '',
+              city: '',
+              area: '',
+              address: '',
+              phone: '',
+              map_link: '',
+              status: 'active',
+            });
             setDrawerVisible(true);
           }}
         />
@@ -237,13 +263,13 @@ const Branches = () => {
       />
 
       <DrawerForm
-        action={'create'}
-        title={editingBranch ? 'Edit branch' : 'Create branch'}
+        action={isEditMode ? 'edit' : 'create'}
+        title={isEditMode ? 'Edit branch' : 'Create branch'}
         visible={drawerVisible}
         setVisible={setDrawerVisible}
         form={createBranchForm}
         formItems={formItems}
-        onSubmit={createBranch}
+        onSubmit={isEditMode ? editBranch : createBranch}
       />
     </div>
   );

@@ -6,6 +6,7 @@ import {
   createAsset as createAssetApi,
   getAssets,
   getBranches,
+  updateAsset,
 } from '../../apis';
 import { PlusCircle, Edit, Trash2, Eye } from 'lucide-react';
 import { message, Tag, Tooltip, Space, Popconfirm } from 'antd';
@@ -19,6 +20,7 @@ const Assets = () => {
   const [loading, setLoading] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedAssetId, setSelectedAssetId] = useState(null);
   const [pagination, setPagination] = useState({
     current: 1,
     pageSize: 10,
@@ -78,6 +80,26 @@ const Assets = () => {
       await createAssetApi(data);
       message.success('Asset added successfully');
       fetchAssets();
+      return true;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  };
+
+  const editAsset = async (values, imageUrls) => {
+    if (!selectedAssetId) return;
+    try {
+      const data = { ...values };
+
+      if (imageUrls && imageUrls.length > 0) {
+        data.images = imageUrls;
+      }
+
+      await updateAsset(selectedAssetId, data);
+      message.success('Asset updated successfully');
+      fetchAssets();
+      return true;
     } catch (err) {
       console.error(err);
       throw err;
@@ -156,6 +178,15 @@ const Assets = () => {
             <Edit
               size={16}
               className="cursor-pointer text-blue-500 hover:text-blue-700"
+              onClick={() => {
+                createAssetForm.reset({
+                  ...record,
+                  branch_id: record.branch._id,
+                });
+                setSelectedAssetId(record._id);
+                setIsEditMode(true);
+                setDrawerVisible(true);
+              }}
             />
           </Tooltip>
           <Popconfirm
@@ -265,6 +296,18 @@ const Assets = () => {
           icon={<PlusCircle />}
           onClick={() => {
             setIsEditMode(false);
+            setSelectedAssetId(null);
+            createAssetForm.reset({
+              name: '',
+              asset_type: 'equipment',
+              branch_id: '',
+              description: '',
+              maintenance_interval_days: 30,
+              brand: '',
+              serial_number: '',
+              model_number: '',
+              status: 'active',
+            });
             setDrawerVisible(true);
           }}
         />
@@ -292,7 +335,7 @@ const Assets = () => {
         title={isEditMode ? 'Edit asset' : 'Create asset'}
         action={isEditMode ? 'edit' : 'create'}
         form={createAssetForm}
-        onSubmit={createAsset}
+        onSubmit={isEditMode ? editAsset : createAsset}
         formItems={formItems}
         showImageUpload={true}
       />

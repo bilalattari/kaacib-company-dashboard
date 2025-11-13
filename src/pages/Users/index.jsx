@@ -1,47 +1,38 @@
 import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import {
-  createUser,
+  createUser as createUserApi,
+  updateUser as updateUserApi,
+  deleteUser as deleteUserApi,
   getUsers,
-  getUserById,
-  updateUser,
-  deleteUser,
   changePassword,
   getBranches,
 } from '../../apis';
-import {
-  message,
-  Tag,
-  Tooltip,
-  Drawer,
-  Modal,
-  Input,
-  Select,
-  Button,
-  Space,
-  Descriptions,
-  Popconfirm,
-  Checkbox,
-} from 'antd';
-import { useForm } from 'react-hook-form';
+import { message, Tag, Tooltip, Space, Popconfirm } from 'antd';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createUserSchema, changePasswordSchema } from '../../helpers/schema';
 import ThemedTable from '../../components/ThemedTable';
 import ThemedButton from '../../components/ThemedButton';
-import { format, parseISO } from 'date-fns';
 import { PlusCircle, Edit, Trash2, Eye, Key } from 'lucide-react';
-
-const { Option } = Select;
+import DrawerForm from '../../components/DrawerForm';
 
 const Users = () => {
-  const [loading, setLoading] = useState(false);
-  const [drawerVisible, setDrawerVisible] = useState(false);
-  const [detailDrawerVisible, setDetailDrawerVisible] = useState(false);
-  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [data, setData] = useState([]);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [editingUser, setEditingUser] = useState(null);
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [passwordModalVisible, setPasswordModalVisible] = useState(false);
   const [branches, setBranches] = useState([]);
-  const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0,
+  });
+
+  const createUserForm = useForm({
+    resolver: zodResolver(createUserSchema),
+  });
 
   useEffect(() => {
     fetchUsers();
@@ -76,23 +67,36 @@ const Users = () => {
     }
   };
 
-  const fetchUserDetails = async (id) => {
+  const createUser = async (data) => {
     try {
-      setLoading(true);
-      const { data } = await getUserById(id);
-      setSelectedUser(data?.data?.user);
-      setDetailDrawerVisible(true);
+      await createUserApi(data);
+      message.success('User created successfully');
+      fetchUsers();
     } catch (err) {
-      message.error(err.response?.data?.message || 'Something went wrong.');
-    } finally {
-      setLoading(false);
+      console.error('Error creating user:', err);
+      throw err;
     }
   };
 
-  const handleDelete = async (id) => {
+  const updateUser = async (data) => {
+    try {
+      if (data.password === '') {
+        delete data.password;
+      }
+
+      await updateUserApi(selectedUserId, data);
+      message.success('User updated successfully');
+      fetchUsers();
+    } catch (err) {
+      console.error('Error updating user:', err);
+      throw err;
+    }
+  };
+
+  const deleteUser = async (id) => {
     try {
       setLoading(true);
-      await deleteUser(id);
+      await deleteUserApi(id);
       message.success('User deleted successfully');
       fetchUsers();
     } catch (err) {
@@ -101,6 +105,75 @@ const Users = () => {
       setLoading(false);
     }
   };
+
+  const formItems = [
+    {
+      name: 'first_name',
+      label: 'First Name',
+      type: 'text',
+      placeholder: 'Enter first name',
+      required: true,
+    },
+    {
+      name: 'last_name',
+      label: 'Last Name',
+      type: 'text',
+      placeholder: 'Enter last name',
+      required: true,
+    },
+    {
+      name: 'email',
+      label: 'Email',
+      type: 'text',
+      placeholder: 'Enter email address',
+      required: true,
+    },
+    {
+      name: 'phone',
+      label: 'Phone Number',
+      type: 'text',
+      placeholder: 'Enter phone number',
+      required: true,
+    },
+    {
+      name: 'password',
+      label: 'Password',
+      type: 'password',
+      placeholder: 'Enter password',
+      required: true,
+    },
+    {
+      name: 'branch_id',
+      label: 'Branch',
+      type: 'select',
+      placeholder: 'Select branch (optional)',
+      options: branches.map((branch) => ({
+        value: branch._id,
+        label: branch.name,
+      })),
+    },
+    {
+      name: 'role',
+      label: 'Role',
+      type: 'select',
+      placeholder: 'Select role',
+      required: true,
+      options: [
+        { value: 'company_admin', label: 'Company Admin' },
+        { value: 'branch_admin', label: 'Branch Admin' },
+      ],
+    },
+    {
+      name: 'status',
+      label: 'Status',
+      type: 'select',
+      placeholder: 'Select status',
+      options: [
+        { value: 'active', label: 'Active' },
+        { value: 'suspended', label: 'Suspended' },
+      ],
+    },
+  ];
 
   const columns = [
     {
@@ -186,329 +259,50 @@ const Users = () => {
       },
     },
     {
-      title: 'Created At',
-      dataIndex: 'created_at',
-      key: 'created_at',
-      render: (date) =>
-        date ? format(parseISO(date), 'dd MMM, yyyy hh:mm a') : '—',
-    },
-    {
-      title: 'Last Login',
-      dataIndex: 'last_login',
-      key: 'last_login',
-      render: (date) =>
-        date ? format(parseISO(date), 'dd MMM, yyyy hh:mm a') : '—',
-    },
-    {
       title: 'Actions',
       key: 'actions',
       render: (_, record) => (
         <Space>
-          <Button
-            type="link"
-            icon={<Eye size={16} />}
-            onClick={() => fetchUserDetails(record.id)}
-          >
-            View
-          </Button>
-          <Button
-            type="link"
-            icon={<Edit size={16} />}
-            onClick={() => {
-              setEditingUser(record);
-              setDrawerVisible(true);
-            }}
-          >
-            Edit
-          </Button>
-          <Button
-            type="link"
-            icon={<Key size={16} />}
-            onClick={() => {
-              setSelectedUser(record);
-              setPasswordModalVisible(true);
-            }}
-          >
-            Password
-          </Button>
+          <Tooltip title="View Details">
+            <Eye
+              size={16}
+              className="cursor-pointer text-blue-500 hover:text-blue-700"
+              onClick={() => fetchUserDetails(record.id)}
+            />
+          </Tooltip>
+          <Tooltip title="Edit">
+            <Edit
+              size={16}
+              className="cursor-pointer text-blue-500 hover:text-blue-700"
+              onClick={() => {
+                createUserForm.reset({
+                  ...record,
+                  branch_id: record.branch._id,
+                  password: null,
+                });
+                setSelectedUserId(record._id);
+                setIsEditMode(true);
+                setDrawerVisible(true);
+              }}
+            />
+          </Tooltip>
           <Popconfirm
             title="Are you sure you want to delete this user?"
-            onConfirm={() => handleDelete(record.id)}
+            onConfirm={() => deleteUser(record._id)}
             okText="Yes"
             cancelText="No"
           >
-            <Button type="link" danger icon={<Trash2 size={16} />}>
-              Delete
-            </Button>
+            <Tooltip title="Delete">
+              <Trash2
+                size={16}
+                className="cursor-pointer text-red-500 hover:text-red-700"
+              />
+            </Tooltip>
           </Popconfirm>
         </Space>
       ),
     },
   ];
-
-  // Create/Edit User Form
-  const UserForm = () => {
-    const {
-      register,
-      handleSubmit,
-      formState: { errors },
-      setValue,
-      watch,
-      reset,
-    } = useForm({
-      resolver: zodResolver(createUserSchema),
-      defaultValues: editingUser || {
-        role: 'branch_admin',
-        status: 'active',
-        permissions: {
-          can_book_services: false,
-          can_complete_bookings: false,
-          can_view_worker_contacts: false,
-          can_manage_assets: false,
-          can_manage_branches: false,
-          can_manage_users: false,
-        },
-      },
-    });
-
-    useEffect(() => {
-      if (editingUser) {
-        Object.keys(editingUser).forEach((key) => {
-          setValue(key, editingUser[key]);
-        });
-      } else {
-        reset({
-          role: 'branch_admin',
-          status: 'active',
-          permissions: {
-            can_book_services: false,
-            can_complete_bookings: false,
-            can_view_worker_contacts: false,
-            can_manage_assets: false,
-            can_manage_branches: false,
-            can_manage_users: false,
-          },
-        });
-      }
-    }, [editingUser, setValue, reset]);
-
-    const onSubmit = async (values) => {
-      try {
-        setLoading(true);
-        if (editingUser) {
-          // Remove password from update if not editing
-          const { password, ...updateData } = values;
-          await updateUser(editingUser.id, updateData);
-          message.success('User updated successfully');
-        } else {
-          await createUser(values);
-          message.success('User created successfully');
-        }
-        setDrawerVisible(false);
-        setEditingUser(null);
-        fetchUsers();
-      } catch (err) {
-        message.error(err.response?.data?.message || 'Something went wrong.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    return (
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <div>
-          <label className="theme-text font-semibold">First Name *</label>
-          <Input
-            {...register('first_name')}
-            placeholder="Enter first name"
-            className="mt-1"
-          />
-          {errors.first_name && (
-            <p className="text-red-500 text-sm mt-1">{errors.first_name.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="theme-text font-semibold">Last Name *</label>
-          <Input
-            {...register('last_name')}
-            placeholder="Enter last name"
-            className="mt-1"
-          />
-          {errors.last_name && (
-            <p className="text-red-500 text-sm mt-1">{errors.last_name.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="theme-text font-semibold">Email *</label>
-          <Input
-            {...register('email')}
-            type="email"
-            placeholder="Enter email"
-            className="mt-1"
-          />
-          {errors.email && (
-            <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>
-          )}
-        </div>
-
-        <div>
-          <label className="theme-text font-semibold">Phone *</label>
-          <Input
-            {...register('phone')}
-            placeholder="Enter phone number"
-            className="mt-1"
-          />
-          {errors.phone && (
-            <p className="text-red-500 text-sm mt-1">{errors.phone.message}</p>
-          )}
-        </div>
-
-        {!editingUser && (
-          <div>
-            <label className="theme-text font-semibold">Password *</label>
-            <Input.Password
-              {...register('password')}
-              placeholder="Enter password"
-              className="mt-1"
-            />
-            {errors.password && (
-              <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
-            )}
-          </div>
-        )}
-
-        <div>
-          <label className="theme-text font-semibold">Branch (Optional)</label>
-          <Select
-            value={watch('branch_id')}
-            onChange={(value) => setValue('branch_id', value)}
-            className="w-full mt-1"
-            allowClear
-            placeholder="Select branch"
-          >
-            {branches.map((branch) => (
-              <Option key={branch.id} value={branch.id}>
-                {branch.name}
-              </Option>
-            ))}
-          </Select>
-        </div>
-
-        <div>
-          <label className="theme-text font-semibold">Role *</label>
-          <Select
-            value={watch('role')}
-            onChange={(value) => setValue('role', value)}
-            className="w-full mt-1"
-          >
-            <Option value="company_admin">Company Admin</Option>
-            <Option value="branch_admin">Branch Admin</Option>
-          </Select>
-        </div>
-
-        <div>
-          <label className="theme-text font-semibold">Status</label>
-          <Select
-            value={watch('status')}
-            onChange={(value) => setValue('status', value)}
-            className="w-full mt-1"
-          >
-            <Option value="active">Active</Option>
-            <Option value="suspended">Suspended</Option>
-          </Select>
-        </div>
-
-        <div>
-          <label className="theme-text font-semibold">Permissions</label>
-          <div className="flex flex-col gap-2 mt-2">
-            {[
-              'can_book_services',
-              'can_complete_bookings',
-              'can_view_worker_contacts',
-              'can_manage_assets',
-              'can_manage_branches',
-              'can_manage_users',
-            ].map((perm) => (
-              <Checkbox
-                key={perm}
-                checked={watch(`permissions.${perm}`)}
-                onChange={(e) =>
-                  setValue(`permissions.${perm}`, e.target.checked)
-                }
-              >
-                {perm.replaceAll('_', ' ').replace(/\b\w/g, (l) => l.toUpperCase())}
-              </Checkbox>
-            ))}
-          </div>
-        </div>
-
-        <ThemedButton
-          type="submit"
-          text={editingUser ? 'Update User' : 'Create User'}
-          loading={loading}
-          className="mt-2"
-        />
-      </form>
-    );
-  };
-
-  // Change Password Form
-  const ChangePasswordForm = () => {
-    const {
-      register,
-      handleSubmit,
-      formState: { errors },
-    } = useForm({
-      resolver: zodResolver(changePasswordSchema),
-    });
-
-    const onSubmit = async (values) => {
-      try {
-        setLoading(true);
-        await changePassword(values);
-        message.success('Password changed successfully');
-        setPasswordModalVisible(false);
-      } catch (err) {
-        message.error(err.response?.data?.message || 'Something went wrong.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    return (
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <div>
-          <label className="theme-text font-semibold">Current Password *</label>
-          <Input.Password
-            {...register('currentPassword')}
-            placeholder="Enter current password"
-            className="mt-1"
-          />
-          {errors.currentPassword && (
-            <p className="text-red-500 text-sm mt-1">
-              {errors.currentPassword.message}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <label className="theme-text font-semibold">New Password *</label>
-          <Input.Password
-            {...register('newPassword')}
-            placeholder="Enter new password"
-            className="mt-1"
-          />
-          {errors.newPassword && (
-            <p className="text-red-500 text-sm mt-1">{errors.newPassword.message}</p>
-          )}
-        </div>
-
-        <ThemedButton type="submit" text="Change Password" loading={loading} className="mt-2" />
-      </form>
-    );
-  };
 
   return (
     <div className="w-full h-full px-4">
@@ -517,11 +311,21 @@ const Users = () => {
           text="Create User"
           icon={<PlusCircle />}
           onClick={() => {
-            setEditingUser(null);
+            setIsEditMode(false);
             setDrawerVisible(true);
           }}
         />
       </div>
+
+      <DrawerForm
+        action={isEditMode ? 'edit' : 'create'}
+        title={isEditMode ? 'Edit user' : 'Create user'}
+        visible={drawerVisible}
+        setVisible={setDrawerVisible}
+        form={createUserForm}
+        formItems={formItems}
+        onSubmit={isEditMode ? updateUser : createUser}
+      />
 
       <ThemedTable
         loading={loading}
@@ -537,80 +341,6 @@ const Users = () => {
             setPagination((prev) => ({ ...prev, pageSize, current: 1 })),
         }}
       />
-
-      {/* Create/Edit User Drawer */}
-      <Drawer
-        title={editingUser ? 'Edit User' : 'Create User'}
-        open={drawerVisible}
-        onClose={() => {
-          setDrawerVisible(false);
-          setEditingUser(null);
-        }}
-        width={500}
-      >
-        <UserForm />
-      </Drawer>
-
-      {/* User Details Drawer */}
-      <Drawer
-        title={`User Details - ${selectedUser?.first_name || ''} ${selectedUser?.last_name || ''}`}
-        open={detailDrawerVisible}
-        onClose={() => {
-          setDetailDrawerVisible(false);
-          setSelectedUser(null);
-        }}
-        width={600}
-      >
-        {selectedUser && (
-          <Descriptions bordered column={1}>
-            <Descriptions.Item label="Name">
-              {selectedUser.first_name} {selectedUser.last_name}
-            </Descriptions.Item>
-            <Descriptions.Item label="Email">{selectedUser.email}</Descriptions.Item>
-            <Descriptions.Item label="Phone">{selectedUser.phone}</Descriptions.Item>
-            <Descriptions.Item label="Role">
-              <Tag
-                color={
-                  selectedUser.role === 'company_admin' ? 'purple' : 'blue'
-                }
-              >
-                {selectedUser.role?.replace('_', ' ').toUpperCase()}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Branch">
-              {selectedUser.branch?.name || '—'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Status">
-              <Tag color={selectedUser.status === 'active' ? 'green' : 'volcano'}>
-                {selectedUser.status?.toUpperCase()}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Created At">
-              {selectedUser.created_at
-                ? format(parseISO(selectedUser.created_at), 'dd MMM, yyyy hh:mm a')
-                : '—'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Last Login">
-              {selectedUser.last_login
-                ? format(parseISO(selectedUser.last_login), 'dd MMM, yyyy hh:mm a')
-                : '—'}
-            </Descriptions.Item>
-          </Descriptions>
-        )}
-      </Drawer>
-
-      {/* Change Password Modal */}
-      <Modal
-        title="Change Password"
-        open={passwordModalVisible}
-        onCancel={() => {
-          setPasswordModalVisible(false);
-          setSelectedUser(null);
-        }}
-        footer={null}
-      >
-        <ChangePasswordForm />
-      </Modal>
     </div>
   );
 };
