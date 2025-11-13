@@ -27,6 +27,31 @@ const AppRouter = () => {
     }
   }, [dispatch]);
 
+  const { permissions } = user || {};
+
+  const routeMap = [
+    {
+      permission: permissions?.can_book_services,
+      path: '/tickets',
+      element: <Tickets />,
+    },
+    {
+      permission: permissions?.can_manage_branches,
+      path: '/branches',
+      element: <Branches />,
+    },
+    {
+      permission: permissions?.can_manage_assets,
+      path: '/assets',
+      element: <Assets />,
+    },
+    {
+      permission: permissions?.can_manage_users,
+      path: '/users',
+      element: <Users />,
+    },
+  ];
+
   return (
     <Routes>
       <Route
@@ -43,10 +68,11 @@ const AppRouter = () => {
         }
       >
         <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/tickets" element={<Tickets />} />
-        <Route path="/branches" element={<Branches />} />
-        <Route path="/assets" element={<Assets />} />
-        <Route path="/users" element={<Users />} />
+        {routeMap.map(({ permission, path, element }) =>
+          permission ? (
+            <Route key={path} path={path} element={element} />
+          ) : null,
+        )}
         <Route path="/profile" element={<Profile />} />
       </Route>
 

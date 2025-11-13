@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { logOut } from '@/redux/slices/authSlice';
 import { Menu } from 'antd';
 import {
@@ -14,45 +14,14 @@ import {
   User2,
 } from 'lucide-react';
 import ThemedButton from '../ThemedButton';
-
-const items = [
-  {
-    icon: <PieChart className="size-5" />,
-    label: 'Dashboard',
-    path: '/dashboard',
-  },
-  {
-    icon: <TicketsIcon className="size-5" />,
-    label: 'Tickets',
-    path: '/tickets',
-  },
-  {
-    icon: <GitForkIcon className="size-5" />,
-    label: 'Branches',
-    path: '/branches',
-  },
-  {
-    icon: <Package className="size-5" />,
-    label: 'Assets',
-    path: '/assets',
-  },
-  {
-    icon: <Users className="size-5" />,
-    label: 'Users',
-    path: '/users',
-  },
-  {
-    icon: <User2 className="size-5" />,
-    label: 'Profile',
-    path: '/profile',
-  },
-];
+import { selectUser } from '../../redux/slices/authSlice';
 
 const ThemedSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch();
+  const { permissions } = useSelector(selectUser) || {};
 
   const toggleCollapsed = () => {
     setCollapsed(!collapsed);
@@ -62,6 +31,45 @@ const ThemedSidebar = () => {
     dispatch(logOut());
     navigate('/login');
   };
+
+  const items = [
+    {
+      permission: true,
+      icon: <PieChart className="size-5" />,
+      label: 'Dashboard',
+      path: '/dashboard',
+    },
+    {
+      permission: permissions?.can_book_services,
+      icon: <TicketsIcon className="size-5" />,
+      label: 'Tickets',
+      path: '/tickets',
+    },
+    {
+      permission: permissions?.can_manage_branches,
+      icon: <GitForkIcon className="size-5" />,
+      label: 'Branches',
+      path: '/branches',
+    },
+    {
+      permission: permissions?.can_manage_assets,
+      icon: <Package className="size-5" />,
+      label: 'Assets',
+      path: '/assets',
+    },
+    {
+      permission: permissions?.can_manage_users,
+      icon: <Users className="size-5" />,
+      label: 'Users',
+      path: '/users',
+    },
+    {
+      permission: true,
+      icon: <User2 className="size-5" />,
+      label: 'Profile',
+      path: '/profile',
+    },
+  ];
 
   return (
     <div className="theme-bg flex-content-center flex-col w-full h-full py-4 gap-16 px-2">
@@ -89,22 +97,26 @@ const ThemedSidebar = () => {
         selectedKeys={[location.pathname]}
         mode="inline"
       >
-        {items.map((item, i) => (
-          <Menu.Item
-            key={item.path}
-            icon={item.icon}
-            onClick={() => navigate(item.path)}
-            label={item.label}
-            title={collapsed && item.label}
-            className={`w-full! flex! items-center justify-between text-white! mb-2! hover:bg-white/90! hover:text-black! hover:shadow-md! hover:translate-y-1 [&.ant-menu-item-selected]:bg-white/90! [&.ant-menu-item-selected]:text-black! [&.ant-menu-item-selected]:shadow-md! [&.ant-menu-item-selected]:translate-y-1! transition-all duration-300 m-0! ${
-              collapsed ? 'pl-1! pr-0! justify-center!' : 'px-4!'
-            }`}
-          >
-            <span className={`text-md ${collapsed && 'hidden'}`}>
-              {item.label}
-            </span>
-          </Menu.Item>
-        ))}
+        {items.map((item) => {
+          return (
+            item?.permission && (
+              <Menu.Item
+                key={item.path}
+                icon={item.icon}
+                onClick={() => navigate(item.path)}
+                label={item.label}
+                title={collapsed && item.label}
+                className={`w-full! flex! items-center justify-between text-white! mb-2! hover:bg-white/90! hover:text-black! hover:shadow-md! hover:translate-y-1 [&.ant-menu-item-selected]:bg-white/90! [&.ant-menu-item-selected]:text-black! [&.ant-menu-item-selected]:shadow-md! [&.ant-menu-item-selected]:translate-y-1! transition-all duration-300 m-0! ${
+                  collapsed ? 'pl-1! pr-0! justify-center!' : 'px-4!'
+                }`}
+              >
+                <span className={`text-md ${collapsed && 'hidden'}`}>
+                  {item.label}
+                </span>
+              </Menu.Item>
+            )
+          );
+        })}
       </Menu>
 
       <ThemedButton
