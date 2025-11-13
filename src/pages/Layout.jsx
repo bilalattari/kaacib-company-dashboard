@@ -11,6 +11,7 @@ import {
   Home,
   ChevronRight,
   Calendar,
+  User2,
 } from 'lucide-react';
 
 const AppLayout = () => {
@@ -23,7 +24,7 @@ const AppLayout = () => {
     '/branches': { label: 'Branches', icon: <GitForkIcon size={18} /> },
     '/assets': { label: 'Assets', icon: <Package size={18} /> },
     '/users': { label: 'Users', icon: <Users size={18} /> },
-    // '/bookings': { label: 'Bookings', icon: <Calendar size={18} /> },
+    '/profile': { label: 'Profile', icon: <User2 size={18} /> },
   };
 
   const current = breadcrumbMap[location.pathname] || {

@@ -10,8 +10,8 @@ import {
   PieChart,
   TicketsIcon,
   Users,
-  Calendar,
   ArrowRightCircle,
+  User2,
 } from 'lucide-react';
 import ThemedButton from '../ThemedButton';
 
@@ -42,9 +42,9 @@ const items = [
     path: '/users',
   },
   {
-    icon: <Calendar className="size-5" />,
-    label: 'Bookings',
-    path: '/bookings',
+    icon: <User2 className="size-5" />,
+    label: 'Profile',
+    path: '/profile',
   },
 ];
 

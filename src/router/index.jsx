@@ -11,7 +11,7 @@ import Tickets from '../pages/Tickets';
 import Users from '../pages/Users';
 import Assets from '../pages/Assets';
 import Branches from '../pages/Branches';
-import Bookings from '../pages/Bookings';
+import Profile from '../pages/Profile';
 
 const AppRouter = () => {
   const dispatch = useDispatch();
@@ -47,7 +47,7 @@ const AppRouter = () => {
         <Route path="/branches" element={<Branches />} />
         <Route path="/assets" element={<Assets />} />
         <Route path="/users" element={<Users />} />
-        {/* <Route path="/bookings" element={<Bookings />} /> */}
+        <Route path="/profile" element={<Profile />} />
       </Route>
 
       {/* Fallback Route */}
