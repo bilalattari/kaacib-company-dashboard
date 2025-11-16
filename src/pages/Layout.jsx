@@ -11,10 +11,14 @@ import {
   Home,
   ChevronRight,
   User2,
+  X,
 } from 'lucide-react';
+import { useSelector } from 'react-redux';
+import { selectCompanyInfo } from '../redux/slices/companySlice';
 
 const AppLayout = () => {
   const location = useLocation();
+  const { name } = useSelector(selectCompanyInfo);
 
   const breadcrumbMap = {
     '/dashboard': { label: 'Dashboard', icon: <PieChart size={18} /> },
@@ -58,12 +62,17 @@ const AppLayout = () => {
       </div>
 
       <div className="flex-1 flex flex-col gap-4 overflow-scroll py-3">
-        <div className="w-full h-20 flex items-center px-6 pt-4">
+        <div className="w-full h-20 flex items-center justify-between px-6 pt-4">
           <Breadcrumb
             items={breadcrumbItems}
             separator={<ChevronRight size={22} className="text-gray-400!" />}
             className="theme-text!"
           />
+          <div className="text-primary text-md lg:text-lg font-semibold flex gap-1">
+            <span>Kaacib</span>
+            <X className="text-lg lg:text-xl" />
+            <p>{name}</p>
+          </div>
         </div>
         <div className="px-2">
           <Outlet />
