@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { getParentTickets } from '../../apis';
-import { message, Space } from 'antd';
+import { message, Space, Tag } from 'antd';
 import { Eye } from 'lucide-react';
 import ThemedTable from '../../components/ThemedTable';
 import { format, parse } from 'date-fns';
+import { useSelector } from 'react-redux';
+import { selectCompanyInfo } from '../../redux/slices/companySlice';
 
 export default function Services() {
   const [data, setData] = useState([]);
@@ -14,6 +16,8 @@ export default function Services() {
     pageSize: 10,
     total: 0,
   });
+
+  const { theme_color } = useSelector(selectCompanyInfo) || {};
 
   useEffect(() => {
     fetchTickets();
@@ -62,6 +66,16 @@ export default function Services() {
           return <span>{text}</span>;
         }
       },
+    },
+    {
+      title: 'Status',
+      dataIndex: 'status',
+      key: 'status',
+      render: (text) => (
+        <Tag color={theme_color || ''} className="uppercase opacity-70!">
+          {text}
+        </Tag>
+      ),
     },
     {
       title: 'Total Tickets',
