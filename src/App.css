@@ -1,3 +1,9 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-primary: #ff3300;
+}
+
 @font-face {
   font-family: 'Poppins';
   src: url(./assets/Poppins-Regular.ttf);
@@ -26,17 +32,17 @@
 }
 
 .theme-text {
-  color: #ff3300;
+  color: var(--color-primary);
 }
 
 .theme-border {
-  border-color: #ff3300;
+  border-color: var(--color-primary);
 }
 
 .theme-bg {
-  background-color: #ff3300;
+  background-color: var(--color-primary);
 }
 
 .theme-bg-light {
-  background-color: #e1421a;
+  background-color: var(--color-primary-light);
 }
