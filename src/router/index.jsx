@@ -12,20 +12,46 @@ import Users from '../pages/Users';
 import Assets from '../pages/Assets';
 import Branches from '../pages/Branches';
 import Profile from '../pages/Profile';
+import { getCompanyInfo } from '../apis';
+import { message } from 'antd';
+import {
+  selectCompanyInfo,
+  setCompanyInfo,
+} from '../redux/slices/companySlice';
 
 const AppRouter = () => {
   const dispatch = useDispatch();
   const user = useSelector(selectUser);
+  const companyInfo = useSelector(selectCompanyInfo);
 
   useEffect(() => {
     const userData = getUserData();
 
     if (!user && userData) {
       dispatch(login(userData));
+      fetchCompanyInfo();
     } else if (!userData) {
       dispatch(logOut());
     }
   }, [dispatch]);
+
+  useEffect(() => {
+    if (companyInfo && companyInfo.theme_color) {
+      const root = document.documentElement;
+      root.style.setProperty('--color-primary', companyInfo.theme_color);
+    }
+  }, [companyInfo]);
+
+  const fetchCompanyInfo = async () => {
+    try {
+      const { data } = await getCompanyInfo();
+      dispatch(setCompanyInfo(data.data));
+    } catch (err) {
+      message.error(
+        err?.response?.data?.message || 'Failed to fetch company info.',
+      );
+    }
+  };
 
   const { permissions } = user || {};
 
