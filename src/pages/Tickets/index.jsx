@@ -377,7 +377,7 @@ const Tickets = () => {
         theme={{
           components: {
             Tabs: {
-              ...(companyInfo.theme_color && {
+              ...(companyInfo?.theme_color && {
                 inkBarColor: companyInfo?.theme_color,
               }),
             },

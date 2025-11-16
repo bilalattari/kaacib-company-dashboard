@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { lazy, useEffect } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { login, logOut, selectUser } from '@/redux/slices/authSlice';
@@ -8,6 +8,8 @@ import AppLayout from '@/pages/Layout';
 import Login from '@/pages/Login';
 import Dashboard from '@/pages/Dashboard';
 import Tickets from '../pages/Tickets';
+import TicketDetail from '../pages/TicketDetail';
+import Services from '../pages/Services';
 import Users from '../pages/Users';
 import Assets from '../pages/Assets';
 import Branches from '../pages/Branches';
@@ -60,6 +62,16 @@ const AppRouter = () => {
       permission: permissions?.can_book_services,
       path: '/tickets',
       element: <Tickets />,
+    },
+    {
+      permission: permissions?.can_book_services,
+      path: '/tickets/:id',
+      element: <TicketDetail />,
+    },
+    {
+      permission: permissions?.can_book_services,
+      path: '/services',
+      element: <Services />,
     },
     {
       permission: permissions?.can_manage_branches,
