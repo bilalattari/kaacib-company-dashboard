@@ -31,6 +31,7 @@ import ThemedButton from '../../components/ThemedButton';
 import DrawerForm from '../../components/DrawerForm';
 import { useSelector } from 'react-redux';
 import { selectCompanyInfo } from '../../redux/slices/companySlice';
+import { useNavigate } from 'react-router-dom';
 
 const statusArr = [
   { value: 'all', label: 'All' },
@@ -58,16 +59,8 @@ const Tickets = () => {
   const [branches, setBranches] = useState([]);
   const [assets, setAssets] = useState([]);
   const [services, setServices] = useState([]);
-
-  const [selectedTicket, setSelectedTicket] = useState(null);
   const [filterStatus, setFilterStatus] = useState('all');
-  const [formAction, setFormAction] = useState('create');
-
   const [drawerVisible, setDrawerVisible] = useState(false);
-  const [ticketDrawerVisible, setTicketDrawerVisible] = useState(false);
-  const [rejectModal, setRejectModal] = useState(false);
-  const [reason, setReason] = useState('');
-  const [ticketDetilsLoading, setTicketDetilsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -75,6 +68,7 @@ const Tickets = () => {
     total: 0,
   });
 
+  const navigate = useNavigate();
   const companyInfo = useSelector(selectCompanyInfo);
 
   const createTicketForm = useForm({
@@ -153,21 +147,6 @@ const Tickets = () => {
     }
   };
 
-  const fetchTicketDetails = async (id) => {
-    try {
-      setDetailLoading(true);
-      setTicketDetilsLoading(true);
-      const { data } = await getTicketById(id);
-
-      setSelectedTicket(data?.ticket || null);
-    } catch (err) {
-      message.error(err.response?.data?.message || 'Something went wrong.');
-    } finally {
-      setDetailLoading(false);
-      setTicketDetilsLoading(false);
-    }
-  };
-
   // Create Ticket Submit Handler
   const createTicket = async (values, imageUrls) => {
     try {
@@ -182,28 +161,6 @@ const Tickets = () => {
       return true;
     } catch (err) {
       throw err;
-    }
-  };
-
-  const handleQuotationAction = async (action) => {
-    try {
-      if (!selectedTicket || !action) return;
-
-      const data = await approveRejectQuotation(selectedTicket._id, {
-        action,
-        rejection_reason: reason,
-      });
-
-      setReason(null);
-      setRejectModal(false);
-      setTicketDrawerVisible(false);
-      message.success(`Quotation ${action}ed successfully.`);
-      fetchTickets();
-      console.log(data);
-    } catch (err) {
-      message.error(
-        err.response?.data?.message || `Failed to ${action} ticket.`,
-      );
     }
   };
 
@@ -307,8 +264,7 @@ const Tickets = () => {
           <Eye
             size={16}
             onClick={() => {
-              fetchTicketDetails(record._id);
-              setTicketDrawerVisible(true);
+              navigate(`/tickets/${record._id}`);
             }}
             className="cursor-pointer"
           />
@@ -410,7 +366,7 @@ const Tickets = () => {
         visible={drawerVisible}
         setVisible={setDrawerVisible}
         title="Create ticket"
-        action={formAction}
+        action={'create'}
         form={createTicketForm}
         onSubmit={createTicket}
         formItems={formItems}
