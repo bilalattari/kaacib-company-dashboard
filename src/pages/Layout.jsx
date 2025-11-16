@@ -31,30 +31,60 @@ const AppLayout = () => {
     '/profile': { label: 'Profile', icon: <User2 size={18} /> },
   };
 
-  const current = breadcrumbMap[location.pathname] || {
-    label: 'Home',
-    icon: null,
+  // Generate breadcrumb items dynamically
+  const generateBreadcrumbs = () => {
+    const pathSegments = location.pathname.split('/').filter(Boolean);
+    const items = [
+      {
+        title: (
+          <div className="theme-text flex items-center gap-2">
+            <Home size={18} />
+            <span>Home</span>
+          </div>
+        ),
+        href: '/dashboard',
+      },
+    ];
+
+    let currentPath = '';
+    pathSegments.forEach((segment, index) => {
+      currentPath += `/${segment}`;
+
+      // Check if it's a dynamic route (e.g., ticket ID)
+      const isDynamicSegment = !breadcrumbMap[currentPath];
+
+      if (isDynamicSegment && index > 0) {
+        // For dynamic segments like /tickets/:id
+        const parentPath = `/${pathSegments.slice(0, index).join('/')}`;
+        const parentBreadcrumb = breadcrumbMap[parentPath];
+
+        items.push({
+          title: (
+            <span className="theme-text flex items-center gap-2">
+              {parentBreadcrumb?.icon}
+              {`${parentBreadcrumb?.label || segment} Details`}
+            </span>
+          ),
+        });
+      } else if (breadcrumbMap[currentPath]) {
+        // For static routes
+        const breadcrumb = breadcrumbMap[currentPath];
+        items.push({
+          title: (
+            <span className="theme-text flex items-center gap-2">
+              {breadcrumb.icon}
+              {breadcrumb.label}
+            </span>
+          ),
+          href: index === pathSegments.length - 1 ? undefined : currentPath,
+        });
+      }
+    });
+
+    return items;
   };
 
-  const breadcrumbItems = [
-    {
-      title: (
-        <div className="theme-text flex items-center gap-2">
-          <Home size={18} />
-          <span>Home</span>
-        </div>
-      ),
-      href: '/dashboard',
-    },
-    {
-      title: (
-        <span className="theme-text flex items-center gap-2">
-          {current.icon}
-          {current.label}
-        </span>
-      ),
-    },
-  ];
+  const breadcrumbItems = generateBreadcrumbs();
 
   return (
     <div className="flex w-screen h-screen">
