@@ -77,6 +77,13 @@ const addTicketNote = async (id, data) => {
   return response;
 };
 
+const getParentTickets = async (params = {}) => {
+  const response = await axiosInstance.get('/company/tickets/parent', {
+    params,
+  });
+  return response.data;
+};
+
 // ==================== Branch Management APIs ====================
 const createBranch = async (data) => {
   const response = await axiosInstance.post('/company/branches', data);
@@ -280,6 +287,7 @@ export {
   approveRejectQuotation,
   completeTicket,
   addTicketNote,
+  getParentTickets,
   // Branches
   createBranch,
   getBranches,
