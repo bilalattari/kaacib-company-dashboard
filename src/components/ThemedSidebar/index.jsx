@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import ThemedButton from '../ThemedButton';
 import { selectUser } from '../../redux/slices/authSlice';
+import { selectCompanyInfo } from '../../redux/slices/companySlice';
 
 const ThemedSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
@@ -22,6 +23,7 @@ const ThemedSidebar = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const { permissions } = useSelector(selectUser) || {};
+  const { logo } = useSelector(selectCompanyInfo);
 
   const toggleCollapsed = () => {
     setCollapsed(!collapsed);
@@ -77,12 +79,16 @@ const ThemedSidebar = () => {
         onClick={toggleCollapsed}
         className={`${
           collapsed
-            ? ' flex-content-center w-12 rounded-full'
+            ? ' flex-content-center w-15 rounded-full'
             : 'flex items-center justify-around w-full rounded-xl'
-        } h-12 bg-white shadow-md cursor-pointer transition-all duration-500`}
+        } h-20 bg-white shadow-md cursor-pointer transition-all duration-500`}
       >
         {collapsed ? (
-          <img src="/logo.png" alt="Logo" className="w-2/3 h-2/3 object-fill" />
+          <img
+            src={logo ? logo : '/logo.png'}
+            alt="Logo"
+            className="w-full h-full object-fill"
+          />
         ) : (
           <>
             <p className="font-semibold text-md">KAACIB</p>
