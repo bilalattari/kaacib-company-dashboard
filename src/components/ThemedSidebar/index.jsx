@@ -23,7 +23,7 @@ const ThemedSidebar = () => {
   const location = useLocation();
   const dispatch = useDispatch();
   const { permissions } = useSelector(selectUser) || {};
-  const { logo } = useSelector(selectCompanyInfo);
+  const { logo } = useSelector(selectCompanyInfo) || {};
 
   const toggleCollapsed = () => {
     setCollapsed(!collapsed);

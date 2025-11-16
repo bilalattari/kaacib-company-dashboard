@@ -18,7 +18,7 @@ import { selectCompanyInfo } from '../redux/slices/companySlice';
 
 const AppLayout = () => {
   const location = useLocation();
-  const { name } = useSelector(selectCompanyInfo);
+  const { name } = useSelector(selectCompanyInfo) || {};
 
   const breadcrumbMap = {
     '/dashboard': { label: 'Dashboard', icon: <PieChart size={18} /> },
@@ -68,11 +68,13 @@ const AppLayout = () => {
             separator={<ChevronRight size={22} className="text-gray-400!" />}
             className="theme-text!"
           />
-          <div className="text-primary text-md lg:text-lg font-semibold flex gap-1">
-            <span>Kaacib</span>
-            <X className="text-lg lg:text-xl" />
-            <p>{name}</p>
-          </div>
+          {name && (
+            <div className="text-primary text-md lg:text-lg font-semibold flex gap-1">
+              <span>Kaacib</span>
+              <X className="text-lg lg:text-xl" />
+              <p>{name}</p>
+            </div>
+          )}
         </div>
         <div className="px-2">
           <Outlet />
