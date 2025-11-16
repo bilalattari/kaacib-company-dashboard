@@ -33,7 +33,7 @@ const resetPassword = async (data) => {
 
 // ==================== Company Information APIs ====================
 const getCompanyInfo = async () => {
-  const response = await axiosInstance.get('/company/info');
+  const response = await axiosInstance.get('/company/');
   return response;
 };
 
