@@ -23,6 +23,7 @@ const AppLayout = () => {
   const breadcrumbMap = {
     '/dashboard': { label: 'Dashboard', icon: <PieChart size={18} /> },
     '/tickets': { label: 'Tickets', icon: <TicketsIcon size={18} /> },
+    '/services': { label: 'Services', icon: <Wrench size={18} /> },
     '/workers': { label: 'Workers', icon: <Wrench size={18} /> },
     '/branches': { label: 'Branches', icon: <GitForkIcon size={18} /> },
     '/assets': { label: 'Assets', icon: <Package size={18} /> },

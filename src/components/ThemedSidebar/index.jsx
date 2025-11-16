@@ -12,6 +12,7 @@ import {
   Users,
   ArrowRightCircle,
   User2,
+  Wrench,
 } from 'lucide-react';
 import ThemedButton from '../ThemedButton';
 import { selectUser } from '../../redux/slices/authSlice';
@@ -46,6 +47,12 @@ const ThemedSidebar = () => {
       icon: <TicketsIcon className="size-5" />,
       label: 'Tickets',
       path: '/tickets',
+    },
+    {
+      permission: permissions?.can_book_services,
+      icon: <Wrench className="size-5" />,
+      label: 'Services',
+      path: '/services',
     },
     {
       permission: permissions?.can_manage_branches,
