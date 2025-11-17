@@ -1,9 +1,15 @@
 import { lazy, useEffect } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import {
+  Navigate,
+  Route,
+  Routes,
+  useLocation,
+  useNavigate,
+} from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { login, logOut, selectUser } from '@/redux/slices/authSlice';
 import { getUserData } from '@/helpers';
-import ProtectRoute from './ProtectedRoute';
+import ProtectedRoute from './ProtectedRoute';
 import AppLayout from '@/pages/Layout';
 import Login from '@/pages/Login';
 import Dashboard from '@/pages/Dashboard';
@@ -93,16 +99,11 @@ const AppRouter = () => {
   return (
     <Routes>
       <Route
-        path="/login"
-        element={user ? <Navigate to="/dashboard" replace /> : <Login />}
-      />
-
-      <Route
         path="/"
         element={
-          <ProtectRoute user={user}>
+          <ProtectedRoute user={user}>
             <AppLayout />
-          </ProtectRoute>
+          </ProtectedRoute>
         }
       >
         <Route path="/dashboard" element={<Dashboard />} />
@@ -113,6 +114,11 @@ const AppRouter = () => {
         )}
         <Route path="/profile" element={<Profile />} />
       </Route>
+
+      <Route
+        path="/login"
+        element={user ? <Navigate to="/dashboard" replace /> : <Login />}
+      />
 
       {/* Fallback Route */}
       <Route
