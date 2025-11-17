@@ -5,6 +5,12 @@ import { isValidObjectId } from '../../helpers';
 import { selectCompanyInfo } from '../../redux/slices/companySlice';
 import { useSelector } from 'react-redux';
 import { ConfigProvider, message, Tabs } from 'antd';
+import dummy from '../../../dummy.json';
+import { Loader2 } from 'lucide-react';
+import TicketChat from '../../components/TicketChat';
+import TicketImages from '../../components/TicketImages';
+import TicketHistory from '../../components/TicketHistory';
+import TicketQuotaion from '../../components/TicketQuotation';
 
 const statusArr = [
   { value: 'quotation', label: 'Quotation' },
@@ -20,14 +26,16 @@ const TicketDetail = () => {
   const { id } = useParams();
 
   const [loading, setLoading] = useState(false);
+  const [data, setData] = useState(null);
   const [ticket, setTicket] = useState(null);
+  const [activeTab, setActiveTab] = useState('quotation');
 
   const navigate = useNavigate();
   const { theme_color } = useSelector(selectCompanyInfo) || {};
 
   useEffect(() => {
     fetchTicketDetails();
-  }, [id]);
+  }, []);
 
   const fetchTicketDetails = async () => {
     try {
@@ -38,7 +46,8 @@ const TicketDetail = () => {
       }
       setLoading(true);
       const { data } = await getTicketById(id);
-      setTicket(data?.ticket);
+      setData(data.data || {});
+      setTicket(data.data.ticket || {});
     } catch (err) {
       message.error(
         err.response?.data?.message || 'Failed to fetch ticket details',
@@ -69,49 +78,96 @@ const TicketDetail = () => {
   //   }
   // };
 
+  if (loading) {
+    return (
+      <div className="w-full h-screen px-4 flex items-center justify-center">
+        <Loader2 className="animate-spin theme-text size-8" />
+      </div>
+    );
+  }
+
   return (
     <div className="w-full h-full px-4">
-      <div className="w-1/2 border-2 border-gray-200 rounded-lg p-6 mb-6 bg-white shadow-sm">
-        {loading ? (
-          <div className="text-gray-500">Loading ticket details...</div>
-        ) : ticket ? (
-          <div className="space-y-4">
-            <div>
-              <span className="text-gray-600 font-medium">Ticket Number: </span>
-              <span className="text-gray-900">{ticket.ticket_number}</span>
+      <div className="w-full flex items-center justify-between gap-6 mb-6">
+        <div className="w-1/2 border-2 theme-border rounded-lg p-6 shadow-sm">
+          <h1 className="text-center text-md xl:text-lg font-semibold mb-4">
+            Ticket Information
+          </h1>
+
+          <div className="space-y-3">
+            <div className="flex justify-between items-start">
+              <p className="font-semibold text-sm text-gray-600">Status:</p>
+              <p className="text-sm capitalize">{ticket?.status || 'N/A'}</p>
             </div>
-            <div>
-              <span className="text-gray-600 font-medium">Status: </span>
-              <span className="text-gray-900 capitalize">{ticket.status}</span>
+            <div className="flex justify-between items-start">
+              <p className="font-semibold text-sm text-gray-600">Contract:</p>
+              <p className="text-sm">{ticket?.contract?.title || 'N/A'}</p>
             </div>
-            <div>
-              <span className="text-gray-600 font-medium">Description: </span>
-              <span className="text-gray-900">
-                {ticket.description || 'N/A'}
-              </span>
+            <div className="flex justify-between items-start">
+              <p className="font-semibold text-sm text-gray-600">Service:</p>
+              <p className="text-sm">{ticket?.service?.title?.en || 'N/A'}</p>
             </div>
-            <div>
-              <span className="text-gray-600 font-medium">Service: </span>
-              <span className="text-gray-900">
-                {ticket.service?.title?.en || 'N/A'}
-              </span>
+            <div className="flex justify-between items-start">
+              <p className="font-semibold text-sm text-gray-600">Branch:</p>
+              <p className="text-sm">{ticket?.branch?.name || 'N/A'}</p>
             </div>
-            <div>
-              <span className="text-gray-600 font-medium">Asset Name: </span>
-              <span className="text-gray-900">
-                {ticket.asset?.name || 'N/A'}
-              </span>
+            <div className="flex justify-between items-start">
+              <p className="font-semibold text-sm text-gray-600">Asset:</p>
+              <p className="text-sm">{ticket?.asset?.name || 'N/A'}</p>
             </div>
-            <div>
-              <span className="text-gray-600 font-medium">Worker Name: </span>
-              <span className="text-gray-900">
-                {ticket.worker?.name || 'Not Assigned'}
-              </span>
+            <div className="flex justify-between items-start">
+              <p className="font-semibold text-sm text-gray-600">Worker:</p>
+              <p className="text-sm">
+                {ticket?.worker
+                  ? `${ticket.worker.first_name} ${ticket.worker.last_name}`.trim()
+                  : 'Not Assigned'}
+              </p>
             </div>
           </div>
-        ) : (
-          <div className="text-gray-500">No ticket data available</div>
-        )}
+        </div>
+
+        <div className="w-1/2 border-2 theme-border rounded-lg p-6 shadow-sm">
+          <h1 className="text-center text-md xl:text-lg font-semibold mb-4">
+            Additional Details
+          </h1>
+
+          <div className="space-y-3">
+            <div className="flex justify-between items-start">
+              <p className="font-semibold text-sm text-gray-600">
+                Ticket Number:
+              </p>
+              <p className="text-sm">{ticket?.ticket_number || 'N/A'}</p>
+            </div>
+            <div className="flex justify-between items-start">
+              <p className="font-semibold text-sm text-gray-600">Priority:</p>
+              <p className="text-sm capitalize">{ticket?.priority || 'N/A'}</p>
+            </div>
+            <div className="flex justify-between items-start">
+              <p className="font-semibold text-sm text-gray-600">Type:</p>
+              <p className="text-sm capitalize">{ticket?.type || 'N/A'}</p>
+            </div>
+            <div className="flex justify-between items-start">
+              <p className="font-semibold text-sm text-gray-600">
+                Completed At:
+              </p>
+              <p className="text-sm capitalize">
+                {ticket?.completed_at || '-'}
+              </p>
+            </div>
+            <div className="flex justify-between items-start">
+              <p className="font-semibold text-sm text-gray-600">
+                Description:
+              </p>
+              <p className="text-sm capitalize">{ticket?.description || '-'}</p>
+            </div>
+            <div className="flex justify-between items-start">
+              <p className="font-semibold text-sm text-gray-600">Created By:</p>
+              <p className="text-sm capitalize">
+                {ticket?.created_by?.name || 'Ahmed Raza'}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
       <ConfigProvider
@@ -126,8 +182,8 @@ const TicketDetail = () => {
         }}
       >
         <Tabs
-          defaultActiveKey="quotation"
-          onChange={(key) => setFilterStatus(key)}
+          defaultActiveKey={activeTab}
+          onChange={(key) => setActiveTab(key)}
           items={statusArr.map((status) => ({
             key: status.value,
             label: <span className="theme-text">{status.label}</span>,
@@ -145,6 +201,13 @@ const TicketDetail = () => {
           // }}
         />
       </ConfigProvider>
+
+      {activeTab === 'quotation' && <TicketQuotaion />}
+      {activeTab === 'chat' && <TicketChat data={data?.messages} />}
+      {activeTab === 'images' && (
+        <TicketImages data={ticket?.service_end_images} />
+      )}
+      {activeTab === 'history' && <TicketHistory data={data?.history} />}
     </div>
   );
 };
