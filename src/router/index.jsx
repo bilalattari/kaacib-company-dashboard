@@ -26,6 +26,7 @@ import {
   selectCompanyInfo,
   setCompanyInfo,
 } from '../redux/slices/companySlice';
+import AssetDetail from '../pages/AssetDetail';
 
 const AppRouter = () => {
   const dispatch = useDispatch();
@@ -88,6 +89,11 @@ const AppRouter = () => {
       permission: permissions?.can_manage_assets,
       path: '/assets',
       element: <Assets />,
+    },
+    {
+      permission: permissions?.can_manage_assets,
+      path: '/assets/:id',
+      element: <AssetDetail />,
     },
     {
       permission: permissions?.can_manage_users,

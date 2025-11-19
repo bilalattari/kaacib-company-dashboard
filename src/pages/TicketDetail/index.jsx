@@ -5,12 +5,11 @@ import { isValidObjectId } from '../../helpers';
 import { selectCompanyInfo } from '../../redux/slices/companySlice';
 import { useSelector } from 'react-redux';
 import { ConfigProvider, message, Tabs } from 'antd';
-import dummy from '../../../dummy.json';
 import { Loader2 } from 'lucide-react';
 import TicketChat from '../../components/TicketChat';
-import TicketImages from '../../components/TicketImages';
 import TicketHistory from '../../components/TicketHistory';
 import TicketQuotaion from '../../components/TicketQuotation';
+import Images from '../../components/TicketImages';
 
 const statusArr = [
   { value: 'quotation', label: 'Quotation' },
@@ -87,7 +86,7 @@ const TicketDetail = () => {
   }
 
   return (
-    <div className="w-full h-full px-4">
+    <main className="w-full h-full px-4">
       <div className="w-full flex items-center justify-between gap-6 mb-6">
         <div className="w-1/2 border-2 theme-border rounded-lg p-6 shadow-sm">
           <h1 className="text-center text-md xl:text-lg font-semibold mb-4">
@@ -204,11 +203,9 @@ const TicketDetail = () => {
 
       {activeTab === 'quotation' && <TicketQuotaion />}
       {activeTab === 'chat' && <TicketChat data={data?.messages} />}
-      {activeTab === 'images' && (
-        <TicketImages data={ticket?.service_end_images} />
-      )}
+      {activeTab === 'images' && <Images data={ticket?.service_end_images} />}
       {activeTab === 'history' && <TicketHistory data={data?.history} />}
-    </div>
+    </main>
   );
 };
 

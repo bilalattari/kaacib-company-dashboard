@@ -13,6 +13,7 @@ import { message, Tag, Tooltip, Space, Popconfirm } from 'antd';
 import ThemedTable from '../../components/ThemedTable';
 import DrawerForm from '../../components/DrawerForm';
 import ThemedButton from '../../components/ThemedButton';
+import { useNavigate } from 'react-router-dom';
 
 const Assets = () => {
   const [data, setData] = useState([]);
@@ -26,6 +27,8 @@ const Assets = () => {
     pageSize: 10,
     total: 0,
   });
+
+  const navigate = useNavigate();
 
   const createAssetForm = useForm({
     resolver: zodResolver(createAssetSchema),
@@ -171,6 +174,7 @@ const Assets = () => {
           <Tooltip title="View Details">
             <Eye
               size={16}
+              onClick={() => navigate(`/assets/${record._id}`)}
               className="cursor-pointer text-blue-500 hover:text-blue-700"
             />
           </Tooltip>
