@@ -53,7 +53,7 @@ const getStatusColor = (status) => {
   return colors[status] || 'gray';
 };
 
-const Tickets = () => {
+const Tickets = ({ isAsset, assetId }) => {
   const [data, setData] = useState([]);
   const [contract, setContract] = useState({});
   const [branches, setBranches] = useState([]);
@@ -93,6 +93,7 @@ const Tickets = () => {
         page: pagination.current,
         limit: pagination.pageSize,
         status: filterStatus,
+        ...(isAsset && assetId && { asset: assetId }),
       });
       setData(res?.data?.tickets || []);
       setPagination((prev) => ({
@@ -349,7 +350,11 @@ const Tickets = () => {
           }))}
           tabBarExtraContent={{
             right: (
-              <div className="w-full flex items-center justify-end py-4">
+              <div
+                className={`w-full flex items-center justify-end py-4 ${
+                  isAsset && 'hidden'
+                }`}
+              >
                 <ThemedButton
                   text="Create Ticket"
                   icon={<PlusCircle />}
