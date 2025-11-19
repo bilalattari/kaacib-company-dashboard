@@ -84,6 +84,11 @@ const getParentTickets = async (params = {}) => {
   return response.data;
 };
 
+const getParentTicketById = async (id) => {
+  const response = await axiosInstance.get(`/company/tickets/parent/${id}`);
+  return response.data;
+};
+
 // ==================== Branch Management APIs ====================
 const createBranch = async (data) => {
   const response = await axiosInstance.post('/company/branches', data);
@@ -244,8 +249,6 @@ const getContracts = async () => {
     params: { companyId: userData?.user?.company?._id },
   });
 
-  console.log('Contracts response:', response);
-
   return response;
 };
 
@@ -288,6 +291,7 @@ export {
   completeTicket,
   addTicketNote,
   getParentTickets,
+  getParentTicketById,
   // Branches
   createBranch,
   getBranches,
