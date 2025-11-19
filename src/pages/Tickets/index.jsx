@@ -53,7 +53,7 @@ const getStatusColor = (status) => {
   return colors[status] || 'gray';
 };
 
-const Tickets = ({ isAsset, assetId }) => {
+const Tickets = ({ isAsset, asset }) => {
   const [data, setData] = useState([]);
   const [contract, setContract] = useState({});
   const [branches, setBranches] = useState([]);
@@ -75,6 +75,8 @@ const Tickets = ({ isAsset, assetId }) => {
     resolver: zodResolver(createTicketSchema),
     defaultValues: {
       priority: 'normal',
+      ...(isAsset && asset?._id && { asset_id: asset._id }),
+      ...(isAsset && asset?.branch?._id && { branch_id: asset.branch._id }),
     },
   });
 
@@ -93,7 +95,7 @@ const Tickets = ({ isAsset, assetId }) => {
         page: pagination.current,
         limit: pagination.pageSize,
         status: filterStatus,
-        ...(isAsset && assetId && { asset: assetId }),
+        ...(isAsset && asset?._id && { asset: asset._id }),
       });
       setData(res?.data?.tickets || []);
       setPagination((prev) => ({
@@ -350,11 +352,7 @@ const Tickets = ({ isAsset, assetId }) => {
           }))}
           tabBarExtraContent={{
             right: (
-              <div
-                className={`w-full flex items-center justify-end py-4 ${
-                  isAsset && 'hidden'
-                }`}
-              >
+              <div className={`w-full flex items-center justify-end py-4`}>
                 <ThemedButton
                   text="Create Ticket"
                   icon={<PlusCircle />}

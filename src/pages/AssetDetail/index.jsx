@@ -146,7 +146,7 @@ export default function AssetDetail() {
       </ConfigProvider>
 
       {activeTab === 'ticket' && asset && (
-        <Tickets isAsset={true} assetId={asset?._id} />
+        <Tickets isAsset={true} asset={asset} />
       )}
       {activeTab === 'image' && (
         <Images data={asset?.images} title="Asset Images" />
