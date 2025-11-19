@@ -7,6 +7,7 @@ import { useSelector } from 'react-redux';
 import { selectCompanyInfo } from '../../redux/slices/companySlice';
 import Images from '../../components/TicketImages';
 import Tickets from '../Tickets';
+import { Loader2 } from 'lucide-react';
 
 const statusArr = [
   { value: 'ticket', label: 'Tickets' },
@@ -44,6 +45,14 @@ export default function AssetDetail() {
       setLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="w-full h-screen px-4 flex items-center justify-center">
+        <Loader2 className="animate-spin theme-text size-8" />
+      </div>
+    );
+  }
 
   return (
     <main className="w-full h-full px-4">
@@ -145,9 +154,7 @@ export default function AssetDetail() {
         />
       </ConfigProvider>
 
-      {activeTab === 'ticket' && asset && (
-        <Tickets isAsset={true} asset={asset} />
-      )}
+      {activeTab === 'ticket' && <Tickets isAsset={true} asset={asset} />}
       {activeTab === 'image' && (
         <Images data={asset?.images} title="Asset Images" />
       )}
