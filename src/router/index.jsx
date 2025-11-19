@@ -27,6 +27,7 @@ import {
   setCompanyInfo,
 } from '../redux/slices/companySlice';
 import AssetDetail from '../pages/AssetDetail';
+import ServiceDetail from '../pages/ServiceDetail';
 
 const AppRouter = () => {
   const dispatch = useDispatch();
@@ -79,6 +80,11 @@ const AppRouter = () => {
       permission: permissions?.can_book_services,
       path: '/services',
       element: <Services />,
+    },
+    {
+      permission: permissions?.can_book_services,
+      path: '/services/:id',
+      element: <ServiceDetail />,
     },
     {
       permission: permissions?.can_manage_branches,

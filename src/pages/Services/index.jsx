@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { format, parse } from 'date-fns';
 import { getParentTickets } from '../../apis';
+import { selectCompanyInfo } from '../../redux/slices/companySlice';
 import { message, Space, Tag } from 'antd';
 import { Eye } from 'lucide-react';
 import ThemedTable from '../../components/ThemedTable';
-import { format, parse } from 'date-fns';
-import { useSelector } from 'react-redux';
-import { selectCompanyInfo } from '../../redux/slices/companySlice';
 
 export default function Services() {
   const [data, setData] = useState([]);
@@ -17,6 +18,7 @@ export default function Services() {
     total: 0,
   });
 
+  const navigate = useNavigate();
   const { theme_color } = useSelector(selectCompanyInfo) || {};
 
   useEffect(() => {
@@ -104,10 +106,7 @@ export default function Services() {
         <Space>
           <Eye
             size={16}
-            onClick={() => {
-              fetchTicketDetails(record._id);
-              setTicketDrawerVisible(true);
-            }}
+            onClick={() => navigate(`/services/${record._id}`)}
             className="cursor-pointer"
           />
         </Space>
