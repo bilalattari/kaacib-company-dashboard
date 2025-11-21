@@ -341,7 +341,7 @@ const Tickets = ({ isAsset, asset, isService, service }) => {
         label: 'Branch',
         type: 'select',
         placeholder: 'Select Branch',
-        options: branches.map((branch) => ({
+        options: branches?.map((branch) => ({
           value: branch._id,
           label: branch.name,
         })),

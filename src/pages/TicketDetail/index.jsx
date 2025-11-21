@@ -7,7 +7,7 @@ import { useSelector } from 'react-redux';
 import { ConfigProvider, message, Tabs } from 'antd';
 import { Loader2 } from 'lucide-react';
 import TicketHistory from '../../components/TicketHistory';
-import TicketQuotaion from '../../components/TicketQuotation';
+import TicketQuotation from '../../components/TicketQuotation';
 import Images from '../../components/TicketImages';
 
 const statusArr = [
@@ -42,10 +42,16 @@ const TicketDetail = () => {
       setData(data.data || {});
       setTicket(data.data.ticket || {});
       if (data.data.ticket?.type === 'corrective') {
-        statusArr.unshift({ value: 'quotation', label: 'Quotation' });
-        setActiveTab('quotation');
+        const isAlreadyAdded = statusArr.find(
+          (item) => item.value === 'quotation',
+        );
+        if (!isAlreadyAdded) {
+          statusArr.unshift({ value: 'quotation', label: 'Quotation' });
+          setActiveTab('quotation');
+        }
       }
     } catch (err) {
+      console.error('Error fetching ticket details =>', err);
       message.error(
         err.response?.data?.message || 'Failed to fetch ticket details',
       );
@@ -200,7 +206,7 @@ const TicketDetail = () => {
       </ConfigProvider>
 
       {activeTab === 'quotation' && ticket?.type === 'corrective' && (
-        <TicketQuotaion />
+        <TicketQuotation data={ticket?.quotation} />
       )}
       {activeTab === 'history' && <TicketHistory data={data?.history} />}
       {activeTab === 'images' && <Images data={ticket?.service_end_images} />}

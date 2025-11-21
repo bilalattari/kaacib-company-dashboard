@@ -12,6 +12,7 @@ import { message, Tag, Tooltip, Button, Space, Popconfirm } from 'antd';
 import ThemedTable from '../../components/ThemedTable';
 import ThemedButton from '../../components/ThemedButton';
 import DrawerForm from '../../components/DrawerForm';
+import { clearCache, getCachedData, setCachedData } from '../../helpers/cache';
 
 const Branches = () => {
   const [data, setData] = useState([]);
@@ -36,6 +37,16 @@ const Branches = () => {
   const fetchBranches = async () => {
     try {
       setLoading(true);
+      const cacheKey = 'branches';
+      const cachedData = getCachedData(cacheKey);
+      if (cachedData) {
+        setData(cachedData?.branches || []);
+        setPagination((prev) => ({
+          ...prev,
+          total: cachedData?.pagination?.total || 0,
+        }));
+        return;
+      }
       const { data } = await getBranches({
         page: pagination.current,
         limit: pagination.pageSize,
@@ -45,6 +56,7 @@ const Branches = () => {
         ...prev,
         total: data?.data?.pagination?.total || 0,
       }));
+      setCachedData(cacheKey, data?.data || {});
     } catch (err) {
       message.error(err.response?.data?.message || 'Something went wrong.');
     } finally {
@@ -54,7 +66,9 @@ const Branches = () => {
 
   const createBranch = async (data) => {
     try {
+      const cacheKey = 'branches';
       await createBranchApi(data);
+      clearCache(cacheKey);
       fetchBranches();
       message.success('Branch created successfully.');
       return true;
@@ -67,7 +81,9 @@ const Branches = () => {
   const editBranch = async (data) => {
     if (!selectedBranchId) return;
     try {
+      const cacheKey = 'branches';
       await updateBranch(selectedBranchId, data);
+      clearCache(cacheKey);
       fetchBranches();
       message.success('Branch updated successfully.');
       return true;
