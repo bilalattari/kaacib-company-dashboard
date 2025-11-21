@@ -8,6 +8,7 @@ import { selectCompanyInfo } from '../../redux/slices/companySlice';
 import Images from '../../components/TicketImages';
 import Tickets from '../Tickets';
 import { Loader2 } from 'lucide-react';
+import { getCachedData, setCachedData } from '../../helpers/cache';
 
 const statusArr = [
   { value: 'ticket', label: 'Tickets' },
@@ -29,14 +30,24 @@ export default function AssetDetail() {
 
   const fetchAssetDetails = async () => {
     try {
+      setLoading(true);
       const isValid = isValidObjectId(id);
       if (!isValid) {
         navigate('/assets');
         return;
       }
-      setLoading(true);
+
+      const cacheKey = `asset_details_${id}`;
+
+      const cachedData = getCachedData(cacheKey);
+      if (cachedData) {
+        setAsset(cachedData);
+        return;
+      }
+
       const { data } = await getAssetById(id);
       setAsset(data?.data?.asset || {});
+      setCachedData(cacheKey, data?.data?.asset || {});
     } catch (err) {
       message.error(
         err.response?.data?.message || 'Failed to fetch asset details',

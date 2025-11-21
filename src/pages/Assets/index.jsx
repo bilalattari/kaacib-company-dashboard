@@ -14,6 +14,7 @@ import ThemedTable from '../../components/ThemedTable';
 import DrawerForm from '../../components/DrawerForm';
 import ThemedButton from '../../components/ThemedButton';
 import { useNavigate } from 'react-router-dom';
+import { getCachedData, setCachedData } from '../../helpers/cache';
 
 const Assets = () => {
   const [data, setData] = useState([]);
@@ -39,6 +40,8 @@ const Assets = () => {
     },
   });
 
+  const branchCacheKey = `branches`;
+
   useEffect(() => {
     fetchAssets();
     fetchBranches();
@@ -46,8 +49,15 @@ const Assets = () => {
 
   const fetchBranches = async () => {
     try {
+      const cachedData = getCachedData(branchCacheKey);
+      if (cachedData) {
+        setBranches(cachedData.branches || []);
+        return;
+      }
+
       const { data } = await getBranches();
       setBranches(data?.data?.branches || []);
+      setCachedData(branchCacheKey, data?.data || {});
     } catch (err) {
       console.error('Error fetching branches:', err);
     }
@@ -56,6 +66,17 @@ const Assets = () => {
   const fetchAssets = async () => {
     try {
       setLoading(true);
+      const cacheKey = `asset_list_${pagination.current}_${pagination.pageSize}`;
+      const cachedData = getCachedData(cacheKey);
+      if (cachedData) {
+        setData(cachedData.assets || []);
+        setPagination((prev) => ({
+          ...prev,
+          total: cachedData.pagination?.total || 0,
+        }));
+        return;
+      }
+
       const { data } = await getAssets({
         page: pagination.current,
         limit: pagination.pageSize,
@@ -65,6 +86,7 @@ const Assets = () => {
         ...prev,
         total: data?.data?.pagination?.total || 0,
       }));
+      setCachedData(cacheKey, data?.data || {});
     } catch (err) {
       message.error(err.response?.data?.message || 'Something went wrong.');
     } finally {
@@ -75,6 +97,7 @@ const Assets = () => {
   const createAsset = async (values, imageUrls) => {
     try {
       const data = { ...values };
+      const cacheKey = `asset_list_${pagination.current}_${pagination.pageSize}`;
 
       if (imageUrls && imageUrls.length > 0) {
         data.images = imageUrls;
@@ -82,6 +105,7 @@ const Assets = () => {
 
       await createAssetApi(data);
       message.success('Asset added successfully');
+      clearCache(cacheKey);
       fetchAssets();
       return true;
     } catch (err) {
@@ -94,6 +118,7 @@ const Assets = () => {
     if (!selectedAssetId) return;
     try {
       const data = { ...values };
+      const cacheKey = `asset_list_${pagination.current}_${pagination.pageSize}`;
 
       if (imageUrls && imageUrls.length > 0) {
         data.images = imageUrls;
@@ -101,6 +126,7 @@ const Assets = () => {
 
       await updateAsset(selectedAssetId, data);
       message.success('Asset updated successfully');
+      clearCache(cacheKey);
       fetchAssets();
       return true;
     } catch (err) {

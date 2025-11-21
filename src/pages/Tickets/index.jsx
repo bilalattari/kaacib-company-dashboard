@@ -81,8 +81,8 @@ const Tickets = ({ isAsset, asset, isService, service }) => {
       setLoading(true);
       const cacheKey = `tickets_${pagination.current}_${
         pagination.pageSize
-      }_${filterStatus}_${isAsset && asset._id && asset._id}_${
-        isService && service._id && service._id
+      }_${filterStatus}_${isAsset && asset?._id && asset._id}_${
+        isService && service?._id && service._id
       }`;
       const cachedData = getCachedData(cacheKey);
       if (cachedData) {
@@ -109,6 +109,7 @@ const Tickets = ({ isAsset, asset, isService, service }) => {
       }));
       setCachedData(cacheKey, res?.data);
     } catch (err) {
+      console.error('Error fetching tickets =>', err);
       message.error(err.response?.data?.message || 'Something went wrong.');
     } finally {
       setLoading(false);
@@ -153,9 +154,9 @@ const Tickets = ({ isAsset, asset, isService, service }) => {
 
   const fetchBranches = async () => {
     try {
-      const cachedBranches = getCachedData('branches');
-      if (cachedBranches) {
-        setBranches(cachedBranches);
+      const cachedData = getCachedData('branches');
+      if (cachedData) {
+        setBranches(cachedData.branches);
         return;
       }
 
