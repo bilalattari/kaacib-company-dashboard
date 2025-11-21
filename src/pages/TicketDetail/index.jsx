@@ -6,19 +6,13 @@ import { selectCompanyInfo } from '../../redux/slices/companySlice';
 import { useSelector } from 'react-redux';
 import { ConfigProvider, message, Tabs } from 'antd';
 import { Loader2 } from 'lucide-react';
-import TicketChat from '../../components/TicketChat';
 import TicketHistory from '../../components/TicketHistory';
 import TicketQuotaion from '../../components/TicketQuotation';
 import Images from '../../components/TicketImages';
 
 const statusArr = [
-  { value: 'quotation', label: 'Quotation' },
-  { value: 'chat', label: 'Chat' },
   { value: 'history', label: 'History' },
-  { value: 'workers', label: 'Notified Workers' },
   { value: 'images', label: 'Images' },
-  { value: 'rating', label: 'Rating' },
-  { value: 'comments', label: 'Comments' },
 ];
 
 const TicketDetail = () => {
@@ -27,7 +21,7 @@ const TicketDetail = () => {
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState(null);
   const [ticket, setTicket] = useState(null);
-  const [activeTab, setActiveTab] = useState('quotation');
+  const [activeTab, setActiveTab] = useState('history');
 
   const navigate = useNavigate();
   const { theme_color } = useSelector(selectCompanyInfo) || {};
@@ -47,6 +41,10 @@ const TicketDetail = () => {
       const { data } = await getTicketById(id);
       setData(data.data || {});
       setTicket(data.data.ticket || {});
+      if (data.data.ticket?.type === 'corrective') {
+        statusArr.unshift({ value: 'quotation', label: 'Quotation' });
+        setActiveTab('quotation');
+      }
     } catch (err) {
       message.error(
         err.response?.data?.message || 'Failed to fetch ticket details',
@@ -201,10 +199,11 @@ const TicketDetail = () => {
         />
       </ConfigProvider>
 
-      {activeTab === 'quotation' && <TicketQuotaion />}
-      {activeTab === 'chat' && <TicketChat data={data?.messages} />}
-      {activeTab === 'images' && <Images data={ticket?.service_end_images} />}
+      {activeTab === 'quotation' && ticket?.type === 'corrective' && (
+        <TicketQuotaion />
+      )}
       {activeTab === 'history' && <TicketHistory data={data?.history} />}
+      {activeTab === 'images' && <Images data={ticket?.service_end_images} />}
     </main>
   );
 };
