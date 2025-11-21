@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createTicketSchema } from '../../helpers/schema';
@@ -6,32 +6,20 @@ import { format, parseISO } from 'date-fns';
 import {
   createTicket as createTicketApi,
   getTickets,
-  getTicketById,
   getCompanyInfo,
   getBranches,
   getAssets,
   getServices,
-  approveRejectQuotation,
 } from '../../apis';
-import {
-  message,
-  Tag,
-  Tooltip,
-  Space,
-  Tabs,
-  ConfigProvider,
-  Drawer,
-  Row,
-  Col,
-  Modal,
-} from 'antd';
-import { PlusCircle, Eye, Loader2 } from 'lucide-react';
+import { message, Tag, Tooltip, Space, Tabs, ConfigProvider } from 'antd';
+import { PlusCircle, Eye } from 'lucide-react';
 import ThemedTable from '../../components/ThemedTable';
 import ThemedButton from '../../components/ThemedButton';
 import DrawerForm from '../../components/DrawerForm';
 import { useSelector } from 'react-redux';
 import { selectCompanyInfo } from '../../redux/slices/companySlice';
 import { useNavigate } from 'react-router-dom';
+import { getCachedData, setCachedData, clearCache } from '../../helpers/cache';
 
 const statusArr = [
   { value: 'all', label: 'All' },
@@ -91,11 +79,26 @@ const Tickets = ({ isAsset, asset, isService, service }) => {
   const fetchTickets = async () => {
     try {
       setLoading(true);
+      const cacheKey = `tickets_${pagination.current}_${
+        pagination.pageSize
+      }_${filterStatus}_${isAsset && asset._id && asset._id}_${
+        isService && service._id && service._id
+      }`;
+      const cachedData = getCachedData(cacheKey);
+      if (cachedData) {
+        setData(cachedData.tickets);
+        setPagination((prev) => ({
+          ...prev,
+          total: cachedData.pagination.total || cachedData.tickets.length || 0,
+        }));
+        return;
+      }
       const { data: res } = await getTickets({
         page: pagination.current,
         limit: pagination.pageSize,
         status: filterStatus,
-        ...(isAsset && asset?._id && { asset: asset._id }),
+        type: 'corrective',
+        ...(isAsset && asset?._id && { asset: asset._id, type: '' }),
         ...(isService &&
           service?._id && { parent: service._id, type: 'continuous' }),
       });
@@ -104,7 +107,7 @@ const Tickets = ({ isAsset, asset, isService, service }) => {
         ...prev,
         total: res?.data?.pagination?.total || res?.data?.tickets?.length || 0,
       }));
-      setLoading(false);
+      setCachedData(cacheKey, res?.data);
     } catch (err) {
       message.error(err.response?.data?.message || 'Something went wrong.');
     } finally {
@@ -114,8 +117,16 @@ const Tickets = ({ isAsset, asset, isService, service }) => {
 
   const fetchInfo = async () => {
     try {
+      const cachedInfo = getCachedData('companyInfo');
+      if (cachedInfo) {
+        setContract(cachedInfo?.contracts?.[0] || {});
+        return;
+      }
+
       const { data } = await getCompanyInfo();
-      setContract(data?.data?.contracts?.[0] || {});
+      const companyData = data?.data;
+      setCachedData('companyInfo', companyData);
+      setContract(companyData?.contracts?.[0] || {});
     } catch (err) {
       console.error('Error fetching company details =>', err);
       message.error(err.response?.data?.message || 'Something went wrong.');
@@ -124,8 +135,16 @@ const Tickets = ({ isAsset, asset, isService, service }) => {
 
   const fetchServices = async () => {
     try {
+      const cachedServices = getCachedData('services');
+      if (cachedServices) {
+        setServices(cachedServices);
+        return;
+      }
+
       const { data } = await getServices();
-      setServices(data?.data || []);
+      const servicesData = data?.data || [];
+      setCachedData('services', servicesData);
+      setServices(servicesData);
     } catch (err) {
       console.error('Error fetching services =>', err);
       message.error(err.response?.data?.message || 'Something went wrong.');
@@ -134,8 +153,16 @@ const Tickets = ({ isAsset, asset, isService, service }) => {
 
   const fetchBranches = async () => {
     try {
+      const cachedBranches = getCachedData('branches');
+      if (cachedBranches) {
+        setBranches(cachedBranches);
+        return;
+      }
+
       const { data } = await getBranches();
-      setBranches(data?.data?.branches || []);
+      const branchesData = data?.data?.branches || [];
+      setCachedData('branches', branchesData);
+      setBranches(branchesData);
     } catch (err) {
       console.error('Error fetching branches =>', err);
       message.error(err.response?.data?.message || 'Something went wrong.');
@@ -144,8 +171,16 @@ const Tickets = ({ isAsset, asset, isService, service }) => {
 
   const fetchAssets = async () => {
     try {
+      const cachedAssets = getCachedData('assets');
+      if (cachedAssets) {
+        setAssets(cachedAssets);
+        return;
+      }
+
       const { data } = await getAssets();
-      setAssets(data?.data?.assets || []);
+      const assetsData = data?.data?.assets || [];
+      setCachedData('assets', assetsData);
+      setAssets(assetsData);
     } catch (err) {
       console.error('Error fetching assets =>', err);
       message.error(err.response?.data?.message || 'Something went wrong.');
@@ -171,7 +206,7 @@ const Tickets = ({ isAsset, asset, isService, service }) => {
 
   const selectedBranch = createTicketForm.watch('branch_id');
 
-  const filteredAssets = useCallback(() => {
+  const filteredAssets = useMemo(() => {
     if (!selectedBranch) return [];
 
     const filtered = assets
@@ -233,6 +268,16 @@ const Tickets = ({ isAsset, asset, isService, service }) => {
         );
       },
     },
+    ...(isAsset
+      ? [
+          {
+            title: 'Type',
+            dataIndex: 'type',
+            key: 'type',
+            render: (type) => <p className="capitalize">{type}</p>,
+          },
+        ]
+      : []),
     {
       title: 'Service',
       dataIndex: ['service', 'title', 'en'],
@@ -278,59 +323,62 @@ const Tickets = ({ isAsset, asset, isService, service }) => {
     },
   ];
 
-  const formItems = [
-    {
-      name: 'service_id',
-      label: 'Service',
-      type: 'select',
-      placeholder: 'Select Service',
-      options: services.map((service) => ({
-        value: service._id,
-        label: service.title.en,
-      })),
-    },
-    {
-      name: 'branch_id',
-      label: 'Branch',
-      type: 'select',
-      placeholder: 'Select Branch',
-      options: branches.map((branch) => ({
-        value: branch._id,
-        label: branch.name,
-      })),
-    },
-    {
-      name: 'asset_id',
-      label: 'Asset',
-      type: 'select',
-      placeholder: 'Select Asset',
-      options: filteredAssets(),
-    },
-    {
-      name: 'description',
-      label: 'Description',
-      type: 'textarea',
-      placeholder: 'Enter ticket description',
-      rows: 3,
-    },
-    {
-      name: 'priority',
-      label: 'Priority',
-      type: 'select',
-      placeholder: 'Select Priority',
-      options: [
-        { value: 'normal', label: 'Normal' },
-        { value: 'medium', label: 'Medium' },
-        { value: 'high', label: 'High' },
-      ],
-    },
-    {
-      name: 'scheduled_date',
-      label: 'Date',
-      type: 'date',
-      placeholder: 'Select Date',
-    },
-  ];
+  const formItems = useMemo(
+    () => [
+      {
+        name: 'service_id',
+        label: 'Service',
+        type: 'select',
+        placeholder: 'Select Service',
+        options: services.map((service) => ({
+          value: service._id,
+          label: service.title.en,
+        })),
+      },
+      {
+        name: 'branch_id',
+        label: 'Branch',
+        type: 'select',
+        placeholder: 'Select Branch',
+        options: branches.map((branch) => ({
+          value: branch._id,
+          label: branch.name,
+        })),
+      },
+      {
+        name: 'asset_id',
+        label: 'Asset',
+        type: 'select',
+        placeholder: 'Select Asset',
+        options: filteredAssets,
+      },
+      {
+        name: 'description',
+        label: 'Description',
+        type: 'textarea',
+        placeholder: 'Enter ticket description',
+        rows: 3,
+      },
+      {
+        name: 'priority',
+        label: 'Priority',
+        type: 'select',
+        placeholder: 'Select Priority',
+        options: [
+          { value: 'normal', label: 'Normal' },
+          { value: 'medium', label: 'Medium' },
+          { value: 'high', label: 'High' },
+        ],
+      },
+      {
+        name: 'scheduled_date',
+        label: 'Date',
+        type: 'date',
+        placeholder: 'Select Date',
+      },
+    ],
+    [services, branches, filteredAssets],
+  );
 
   return (
     <div className="w-full h-full px-4">
