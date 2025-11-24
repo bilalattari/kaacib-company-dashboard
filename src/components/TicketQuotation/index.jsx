@@ -1,9 +1,15 @@
+import { useState } from 'react';
 import { approveRejectQuotation } from '../../apis';
 import ThemedButton from '../ThemedButton';
 import { FileText, Package, DollarSign, User, Download } from 'lucide-react';
+import { Modal, message } from 'antd';
 
-export default function TicketQuotation({ data }) {
+export default function TicketQuotation({ data, ticketId }) {
   console.log('Ticket Quotation Data =>', data);
+
+  const [rejectModalVisible, setRejectModalVisible] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // Function to download the quotation PDF
   const downloadQuotationPDF = () => {
@@ -19,8 +25,10 @@ export default function TicketQuotation({ data }) {
     }
   };
 
+  // Function to approve quotation
   const handleApprove = async () => {
     try {
+      setLoading(true);
       await approveRejectQuotation(data._id, { action: 'approve' });
       message.success('Quotation approved successfully.');
     } catch (err) {
@@ -28,25 +36,52 @@ export default function TicketQuotation({ data }) {
         err?.response?.data?.message ||
           'Failed to approve quotation. Please try again.',
       );
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Function to reject quotation
+  // Function to open reject modal
+  const handleRejectClick = () => {
+    setRejectModalVisible(true);
+  };
+
+  // Function to reject quotation with reason
   const handleReject = async () => {
+    if (!rejectionReason.trim()) {
+      message.error('Please provide a reason for rejection.');
+      return;
+    }
+
     try {
-      await approveRejectQuotation(data._id, { action: 'reject' });
+      console.log(data);
+      setLoading(true);
+      await approveRejectQuotation(ticketId, {
+        action: 'reject',
+        rejection_reason: rejectionReason,
+      });
       message.success('Quotation rejected successfully.');
+      setRejectModalVisible(false);
+      setRejectionReason('');
     } catch (err) {
       message.error(
         err?.response?.data?.message ||
           'Failed to reject quotation. Please try again.',
       );
+    } finally {
+      setLoading(false);
     }
+  };
+
+  // Function to close modal
+  const handleModalCancel = () => {
+    setRejectModalVisible(false);
+    setRejectionReason('');
   };
 
   return (
     <div className="w-full p-6">
-      {data?.status === 'quotation_sent_for_revision' ? (
+      {true ? (
         <div className="space-y-6">
           {/* Quotation Header */}
           <div className="flex items-center justify-between">
@@ -191,13 +226,58 @@ export default function TicketQuotation({ data }) {
           <div className="flex items-center justify-center gap-4 mt-6">
             <ThemedButton
               text="Reject"
-              onClick={handleReject}
+              onClick={handleRejectClick}
               className="bg-red-500 hover:bg-red-600"
+              loading={loading}
             />
-            <ThemedButton text="Approve" onClick={handleApprove} />
+            <ThemedButton
+              text="Approve"
+              onClick={handleApprove}
+              loading={loading}
+            />
           </div>
         </div>
       ) : null}
+
+      {/* Rejection Modal */}
+      <Modal
+        title="Reject Quotation"
+        open={rejectModalVisible}
+        onOk={handleReject}
+        onCancel={handleModalCancel}
+        okText="Reject"
+        cancelText="Cancel"
+        okButtonProps={{
+          danger: true,
+          loading: loading,
+        }}
+        cancelButtonProps={{
+          disabled: loading,
+        }}
+      >
+        <div className="py-4">
+          <label
+            htmlFor="rejection-reason"
+            className="block text-sm font-medium text-gray-700 mb-2"
+          >
+            Reason for Rejection <span className="text-red-500">*</span>
+          </label>
+          <textarea
+            id="rejection-reason"
+            rows={4}
+            className="w-full border-2 border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500 resize-none"
+            placeholder="Please provide a reason for rejecting this quotation..."
+            value={rejectionReason}
+            onChange={(e) => setRejectionReason(e.target.value)}
+            disabled={loading}
+          />
+          {!rejectionReason.trim() && (
+            <p className="text-xs text-gray-500 mt-1">
+              Reason is required to reject the quotation
+            </p>
+          )}
+        </div>
+      </Modal>
     </div>
   );
 }
