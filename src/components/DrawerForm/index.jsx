@@ -26,6 +26,7 @@ const DrawerForm = ({
   maxImageCount = 2,
   minImageCount = 1,
   onSubmit,
+  submitButtonText,
 }) => {
   const {
     register,
@@ -100,7 +101,7 @@ const DrawerForm = ({
             disabled={loading}
           />
           <ThemedButton
-            text={action === 'create' ? 'Submit' : 'Update'}
+            text={submitButtonText || (action === 'create' ? 'Submit' : 'Update')}
             onClick={handleSubmit(handleFormSubmit)}
             loading={loading}
           />

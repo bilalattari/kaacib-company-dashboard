@@ -45,13 +45,13 @@ const ThemedSidebar = () => {
     {
       permission: permissions?.can_book_services,
       icon: <TicketsIcon className="size-5" />,
-      label: 'Tickets',
+      label: 'Corrective Tickets',
       path: '/tickets',
     },
     {
       permission: permissions?.can_book_services,
       icon: <Wrench className="size-5" />,
-      label: 'Services',
+      label: 'Service Cycles',
       path: '/services',
     },
     {

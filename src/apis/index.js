@@ -37,6 +37,11 @@ const getCompanyInfo = async () => {
   return response;
 };
 
+const getDashboard = async (params = {}) => {
+  const response = await axiosInstance.get('/company/dashboard', { params });
+  return response;
+};
+
 // ==================== Ticket Management APIs ====================
 const createTicket = async (data) => {
   const response = await axiosInstance.post('/company/tickets', data);
@@ -283,6 +288,7 @@ export {
   resetPassword,
   // Company Info
   getCompanyInfo,
+  getDashboard,
   // Tickets
   createTicket,
   getTickets,

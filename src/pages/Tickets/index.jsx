@@ -23,10 +23,10 @@ import { getCachedData, setCachedData, clearCache } from '../../helpers/cache';
 
 const statusArr = [
   { value: 'all', label: 'All' },
-  { value: 'ongoing', label: 'Ongoing' },
-  { value: 'not_started', label: 'Not Started' },
+  { value: 'pending', label: 'Pending' },
+  { value: 'awaiting_approval', label: 'Awaiting Approval' },
+  { value: 'in_progress', label: 'In Progress' },
   { value: 'completed', label: 'Completed' },
-  { value: 'closed', label: 'Closed' },
 ];
 
 const colors = {
@@ -41,7 +41,7 @@ const getStatusColor = (status) => {
   return colors[status] || 'gray';
 };
 
-const Tickets = ({ isAsset, asset, isService, service }) => {
+const Tickets = ({ isAsset, asset, isService, service, ticketType }) => {
   const [data, setData] = useState([]);
   const [contract, setContract] = useState({});
   const [branches, setBranches] = useState([]);
@@ -69,45 +69,65 @@ const Tickets = ({ isAsset, asset, isService, service }) => {
   });
 
   useEffect(() => {
-    fetchTickets();
     fetchInfo();
     fetchBranches();
     fetchAssets();
     fetchServices();
+  }, []);
+
+  useEffect(() => {
+    // Reset to page 1 when filter changes
+    setPagination((prev) => ({ ...prev, current: 1 }));
+  }, [filterStatus]);
+
+  useEffect(() => {
+    fetchTickets();
   }, [pagination.current, pagination.pageSize, filterStatus]);
 
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      const cacheKey = `tickets_${pagination.current}_${
-        pagination.pageSize
-      }_${filterStatus}_${isAsset && asset?._id && asset._id}_${
-        isService && service?._id && service._id
-      }`;
-      const cachedData = getCachedData(cacheKey);
-      if (cachedData) {
-        setData(cachedData.tickets);
-        setPagination((prev) => ({
-          ...prev,
-          total: cachedData.pagination.total || cachedData.tickets.length || 0,
-        }));
-        return;
+      
+      // Map filter status to API status
+      let apiStatus = filterStatus;
+      
+      if (filterStatus === 'all') {
+        // Don't send status param for 'all'
+        apiStatus = undefined;
+      } else if (filterStatus === 'pending') {
+        // Pending includes: created, assigned, inspecting
+        // Send as comma-separated string or let API handle multiple statuses
+        apiStatus = 'pending'; // Or use: 'created,assigned,inspecting'
+      } else if (filterStatus === 'awaiting_approval') {
+        // Awaiting Approval includes: quotation_pending, awaiting_approval
+        apiStatus = 'awaiting_approval'; // Or use: 'quotation_pending,awaiting_approval'
       }
+      // For in_progress and completed, use filterStatus as is
+
+      // Determine ticket type
+      let ticketTypeParam = 'corrective';
+      if (isService && service?._id) {
+        // If ticketType prop is provided, use it; otherwise default to 'continuous' for scheduled
+        ticketTypeParam = ticketType === 'corrective' ? 'corrective' : 'continuous';
+      } else if (isAsset && asset?._id) {
+        ticketTypeParam = '';
+      }
+
       const { data: res } = await getTickets({
         page: pagination.current,
         limit: pagination.pageSize,
-        status: filterStatus,
-        type: 'corrective',
+        ...(apiStatus && { status: apiStatus }),
+        type: ticketTypeParam,
         ...(isAsset && asset?._id && { asset: asset._id, type: '' }),
         ...(isService &&
-          service?._id && { parent: service._id, type: 'continuous' }),
+          service?._id && { parent: service._id }),
       });
+      
       setData(res?.data?.tickets || []);
       setPagination((prev) => ({
         ...prev,
         total: res?.data?.pagination?.total || res?.data?.tickets?.length || 0,
       }));
-      setCachedData(cacheKey, res?.data);
     } catch (err) {
       console.error('Error fetching tickets =>', err);
       message.error(err.response?.data?.message || 'Something went wrong.');
@@ -220,117 +240,224 @@ const Tickets = ({ isAsset, asset, isService, service }) => {
     return filtered;
   }, [selectedBranch, assets]);
 
-  const columns = [
-    {
-      title: 'Ticket No',
-      dataIndex: 'ticket_number',
-      key: 'ticket_number',
-      render: (text, record) => (
-        <span
-          className="font-medium cursor-pointer theme-text"
-          onClick={() => fetchTicketDetails(record.id)}
-        >
-          {text}
-        </span>
-      ),
-    },
-    {
-      title: 'Priority',
-      dataIndex: 'priority',
-      key: 'priority',
-      render: (priority) => {
-        const color = getStatusColor(priority);
-        return (
-          <Tag className="capitalize" color={color}>
-            {priority === 'red'
-              ? 'High'
-              : priority === 'yellow'
-              ? 'Medium'
-              : priority}
-          </Tag>
-        );
-      },
-    },
-    {
-      title: 'Status',
-      dataIndex: 'status',
-      key: 'status',
-      render: (status) => {
-        const color =
-          status === 'assigned'
-            ? 'blue'
-            : status === 'completed' || status === 'closed'
-            ? 'green'
-            : status === 'quotation_pending'
-            ? 'orange'
-            : 'volcano';
-        return (
-          <Tag color={color}>{status.toUpperCase().replace('_', ' ')}</Tag>
-        );
-      },
-    },
-    ...(isAsset
-      ? [
-          {
-            title: 'Type',
-            dataIndex: 'type',
-            key: 'type',
-            render: (type) => <p className="capitalize">{type}</p>,
+  // Status display mapping
+  const getStatusDisplayText = (status) => {
+    const statusMap = {
+      created: 'Created',
+      assigned: 'Assigned',
+      on_site: 'On-Site',
+      inspecting: 'Inspecting',
+      quotation_pending: 'Quotation Pending',
+      awaiting_approval: 'Awaiting Approval',
+      approved: 'Approved',
+      in_progress: 'In Progress',
+      completed: 'Completed',
+    };
+    return statusMap[status] || status?.toUpperCase().replace('_', ' ') || '—';
+  };
+
+  // Use appropriate columns based on context
+  const columns = useMemo(() => {
+    // Scheduled Services columns
+    if (isService && ticketType === 'scheduled') {
+      return [
+        {
+          title: 'Service ID',
+          dataIndex: 'ticket_number',
+          key: 'ticket_number',
+          render: (text, record) => (
+            <span
+              className="font-medium cursor-pointer theme-text"
+              onClick={() => navigate(`/tickets/${record._id || record.id}`)}
+            >
+              {text}
+            </span>
+          ),
+        },
+        {
+          title: 'Equipment',
+          dataIndex: ['asset', 'name'],
+          key: 'asset.name',
+          render: (text) => text || '—',
+        },
+        {
+          title: 'Branch',
+          dataIndex: ['branch', 'name'],
+          key: 'branch.name',
+          render: (text, record) => (
+            <Tooltip title={record.branch?.city}>
+              <span>{text || '—'}</span>
+            </Tooltip>
+          ),
+        },
+        {
+          title: 'Scheduled Date',
+          dataIndex: 'scheduled_date',
+          key: 'scheduled_date',
+          render: (date) => (date ? format(parseISO(date), 'dd MMM, yyyy') : '—'),
+        },
+        {
+          title: 'Worker/Team',
+          dataIndex: ['worker'],
+          key: 'worker',
+          render: (worker, record) => {
+            if (worker) {
+              const firstName = worker.first_name || '';
+              const lastName = worker.last_name || '';
+              return firstName || lastName 
+                ? `${firstName} ${lastName}`.trim() 
+                : worker.name || '—';
+            }
+            return record.team?.name || '—';
           },
-        ]
-      : []),
-    {
-      title: 'Service',
-      dataIndex: ['service', 'title', 'en'],
-      key: 'service.title.en',
-      render: (text, record) => record.service?.name || text || '—',
-    },
-    {
-      title: 'Branch',
-      dataIndex: ['branch', 'name'],
-      key: 'branch.name',
-      render: (text, record) => (
-        <Tooltip title={record.branch?.city}>
-          <span>{text || '—'}</span>
-        </Tooltip>
-      ),
-    },
-    {
-      title: 'Asset',
-      dataIndex: ['asset', 'name'],
-      key: 'asset.name',
-      render: (text) => text || '—',
-    },
-    {
-      title: 'Date',
-      dataIndex: 'scheduled_date',
-      key: 'scheduled_date',
-      render: (date) => (date ? format(parseISO(date), 'dd MMM, yyyy') : '—'),
-    },
-    {
-      title: 'Actions',
-      key: 'actions',
-      render: (record) => (
-        <Space>
-          <Eye
-            size={16}
-            onClick={() => {
-              navigate(`/tickets/${record._id}`);
-            }}
-            className="cursor-pointer"
-          />
-        </Space>
-      ),
-    },
-  ];
+        },
+        {
+          title: 'Status',
+          dataIndex: 'status',
+          key: 'status',
+          render: (status) => {
+            const color =
+              status === 'assigned'
+                ? 'blue'
+                : status === 'completed' || status === 'closed'
+                ? 'green'
+                : status === 'pending' || status === 'created'
+                ? 'default'
+                : 'orange';
+            const statusText =
+              status === 'pending' || status === 'created'
+                ? 'Pending'
+                : status === 'assigned'
+                ? 'Assigned'
+                : status === 'completed' || status === 'closed'
+                ? 'Completed'
+                : getStatusDisplayText(status);
+            return <Tag color={color}>{statusText}</Tag>;
+          },
+        },
+      ];
+    }
+
+    // Corrective Tickets columns (default)
+    return [
+      {
+        title: 'Ticket ID',
+        dataIndex: 'ticket_number',
+        key: 'ticket_number',
+        render: (text, record) => (
+          <span
+            className="font-medium cursor-pointer theme-text"
+            onClick={() => navigate(`/tickets/${record._id || record.id}`)}
+          >
+            {text}
+          </span>
+        ),
+      },
+      {
+        title: 'Priority',
+        dataIndex: 'priority',
+        key: 'priority',
+        render: (priority) => {
+          const color = getStatusColor(priority);
+          return (
+            <Tag className="capitalize" color={color}>
+              {priority === 'red'
+                ? 'High'
+                : priority === 'yellow'
+                ? 'Medium'
+                : priority}
+            </Tag>
+          );
+        },
+      },
+      {
+        title: 'Status',
+        dataIndex: 'status',
+        key: 'status',
+        render: (status) => {
+          const color =
+            status === 'assigned'
+              ? 'blue'
+              : status === 'completed' || status === 'closed'
+              ? 'green'
+              : status === 'quotation_pending' || status === 'awaiting_approval'
+              ? 'orange'
+              : status === 'in_progress' || status === 'on_site' || status === 'inspecting'
+              ? 'cyan'
+              : status === 'created'
+              ? 'default'
+              : 'volcano';
+          return (
+            <Tag color={color}>{getStatusDisplayText(status)}</Tag>
+          );
+        },
+      },
+      ...(isAsset
+        ? [
+            {
+              title: 'Type',
+              dataIndex: 'type',
+              key: 'type',
+              render: (type) => <p className="capitalize">{type}</p>,
+            },
+          ]
+        : []),
+      {
+        title: 'Service Type',
+        dataIndex: ['service', 'title', 'en'],
+        key: 'service.title.en',
+        render: (text, record) => {
+          // Handle both service.title.en and service.name
+          return record.service?.title?.en || record.service?.name || text || '—';
+        },
+      },
+      {
+        title: 'Branch',
+        dataIndex: ['branch', 'name'],
+        key: 'branch.name',
+        render: (text, record) => (
+          <Tooltip title={record.branch?.city}>
+            <span>{text || '—'}</span>
+          </Tooltip>
+        ),
+      },
+      {
+        title: 'Equipment',
+        dataIndex: ['asset', 'name'],
+        key: 'asset.name',
+        render: (text) => text || '—',
+      },
+      {
+        title: 'Created On',
+        dataIndex: 'createdAt',
+        key: 'createdAt',
+        render: (date) => (date ? format(parseISO(date), 'dd MMM, yyyy') : '—'),
+      },
+      {
+        title: 'Actions',
+        key: 'actions',
+        render: (record) => (
+          <Space>
+            <Eye
+              size={16}
+              onClick={() => {
+                navigate(`/tickets/${record._id}`);
+              }}
+              className="cursor-pointer theme-text hover:opacity-70"
+            />
+          </Space>
+        ),
+      },
+    ];
+  }, [isService, ticketType, isAsset, navigate]);
 
   const formItems = useMemo(
     () => [
       {
         name: 'service_id',
-        label: 'Service',
+        label: 'Service Type',
         type: 'select',
-        placeholder: 'Select Service',
+        placeholder: 'Select Service Type',
         options: services.map((service) => ({
           value: service._id,
           label: service.title.en,
@@ -348,16 +475,16 @@ const Tickets = ({ isAsset, asset, isService, service }) => {
       },
       {
         name: 'asset_id',
-        label: 'Asset',
+        label: 'Equipment',
         type: 'select',
-        placeholder: 'Select Asset',
+        placeholder: 'Select Equipment',
         options: filteredAssets,
       },
       {
         name: 'description',
-        label: 'Description',
+        label: 'Issue Description',
         type: 'textarea',
-        placeholder: 'Enter ticket description',
+        placeholder: 'Describe the issue. Example: AC not cooling, unusual noise, electrical tripping…',
         rows: 3,
       },
       {
@@ -373,7 +500,7 @@ const Tickets = ({ isAsset, asset, isService, service }) => {
       },
       {
         name: 'scheduled_date',
-        label: 'Date',
+        label: 'Requested Date',
         type: 'date',
         placeholder: 'Select Date',
       },
@@ -383,53 +510,63 @@ const Tickets = ({ isAsset, asset, isService, service }) => {
 
   return (
     <div className="w-full h-full px-4">
-      <ConfigProvider
-        theme={{
-          components: {
-            Tabs: {
-              ...(companyInfo?.theme_color && {
-                inkBarColor: companyInfo?.theme_color,
-              }),
+      {/* Page Title - Only show for main corrective tickets page */}
+      {!isService && (
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold theme-text">Corrective Tickets</h1>
+          <p className="text-gray-600 mt-2">
+            On-demand repair requests for equipment breakdowns
+          </p>
+        </div>
+      )}
+
+      {/* Tabs - Only show for main corrective tickets page */}
+      {!isService && (
+        <ConfigProvider
+          theme={{
+            components: {
+              Tabs: {
+                ...(companyInfo?.theme_color && {
+                  inkBarColor: companyInfo?.theme_color,
+                }),
+              },
             },
-          },
-        }}
-      >
-        <Tabs
-          defaultActiveKey="all"
-          onChange={(key) => setFilterStatus(key)}
-          items={statusArr.map((status) => ({
-            key: status.value,
-            label: <span className="theme-text">{status.label}</span>,
-          }))}
-          tabBarExtraContent={{
-            right: (
-              <div
-                className={`w-full flex items-center justify-end py-4 ${
-                  isService && 'hidden'
-                }`}
-              >
-                <ThemedButton
-                  text="Create Ticket"
-                  icon={<PlusCircle />}
-                  onClick={() => setDrawerVisible(true)}
-                />
-              </div>
-            ),
           }}
-        />
-      </ConfigProvider>
+        >
+          <Tabs
+            defaultActiveKey="all"
+            onChange={(key) => setFilterStatus(key)}
+            items={statusArr.map((status) => ({
+              key: status.value,
+              label: <span className="theme-text">{status.label}</span>,
+            }))}
+            tabBarExtraContent={{
+              right: (
+                <div className="w-full flex items-center justify-end py-4">
+                  <ThemedButton
+                    text="New Corrective Ticket"
+                    icon={<PlusCircle />}
+                    onClick={() => setDrawerVisible(true)}
+                  />
+                </div>
+              ),
+            }}
+          />
+        </ConfigProvider>
+      )}
 
       {/* Create Ticket Drawer */}
       <DrawerForm
         visible={drawerVisible}
         setVisible={setDrawerVisible}
-        title="Create ticket"
+        title="Create Corrective Ticket"
         action={'create'}
         form={createTicketForm}
         onSubmit={createTicket}
         formItems={formItems}
         showImageUpload={true}
-        imageRequired={true}
+        imageRequired={false}
+        submitButtonText="Create Ticket"
       />
 
       {/* Tickets Table */}

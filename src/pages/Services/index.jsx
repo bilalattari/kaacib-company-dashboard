@@ -10,7 +10,6 @@ import ThemedTable from '../../components/ThemedTable';
 
 export default function Services() {
   const [data, setData] = useState([]);
-
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
     current: 1,
@@ -19,7 +18,8 @@ export default function Services() {
   });
 
   const navigate = useNavigate();
-  const { theme_color } = useSelector(selectCompanyInfo) || {};
+  const companyInfo = useSelector(selectCompanyInfo) || {};
+  const { theme_color } = companyInfo;
 
   useEffect(() => {
     fetchTickets();
@@ -31,6 +31,7 @@ export default function Services() {
       const { data } = await getParentTickets({
         page: pagination.current,
         limit: pagination.pageSize,
+        ...(companyInfo?._id && { company_id: companyInfo._id }),
       });
       setData(data?.parentTickets || []);
       setPagination((prev) => ({
@@ -45,17 +46,42 @@ export default function Services() {
     }
   };
 
+  // Map backend status to company-friendly status
+  const getCycleStatus = (status) => {
+    const statusMap = {
+      pending: 'Upcoming',
+      active: 'In Progress',
+      completed: 'Completed',
+    };
+    return statusMap[status] || status;
+  };
+
+  // Get status color
+  const getStatusColor = (status) => {
+    const colorMap = {
+      pending: 'blue',
+      active: 'orange',
+      completed: 'green',
+    };
+    return colorMap[status] || 'default';
+  };
+
   const columns = [
     {
-      title: 'Ticket No',
+      title: 'Cycle ID',
       dataIndex: 'parent_ticket_number',
       key: 'parent_ticket_number',
-      render: (text) => (
-        <span className="font-medium cursor-pointer theme-text">{text}</span>
+      render: (text, record) => (
+        <span
+          className="font-medium cursor-pointer theme-text"
+          onClick={() => navigate(`/services/${record._id}`)}
+        >
+          {text}
+        </span>
       ),
     },
     {
-      title: 'Month',
+      title: 'Service Month',
       dataIndex: 'contract_month',
       key: 'contract_month',
       render: (text) => {
@@ -70,44 +96,48 @@ export default function Services() {
       },
     },
     {
-      title: 'Status',
+      title: 'Cycle Status',
       dataIndex: 'status',
       key: 'status',
-      render: (text) => (
-        <Tag color={theme_color || ''} className="uppercase opacity-70!">
-          {text}
+      render: (status) => (
+        <Tag color={getStatusColor(status)} className="capitalize">
+          {getCycleStatus(status)}
         </Tag>
       ),
     },
     {
-      title: 'Total Tickets',
+      title: 'Total Services',
       dataIndex: 'tickets_total',
       key: 'tickets_total',
+      render: (text) => text || 0,
     },
     {
-      title: 'Pending',
+      title: 'Pending Services',
       dataIndex: 'tickets_pending',
       key: 'tickets_pending',
+      render: (text) => text || 0,
     },
     {
-      title: 'Completed',
+      title: 'Completed Services',
       dataIndex: 'tickets_done',
       key: 'tickets_done',
+      render: (text) => text || 0,
     },
     {
-      title: 'Requests',
+      title: 'Corrective Requests',
       dataIndex: 'tickets_corrective_request',
       key: 'tickets_corrective_request',
+      render: (text) => text || 0,
     },
     {
-      title: 'Actions',
+      title: 'View Details',
       key: 'actions',
       render: (record) => (
         <Space>
           <Eye
             size={16}
             onClick={() => navigate(`/services/${record._id}`)}
-            className="cursor-pointer"
+            className="cursor-pointer theme-text hover:opacity-70"
           />
         </Space>
       ),
@@ -116,7 +146,15 @@ export default function Services() {
 
   return (
     <div className="w-full h-full px-4">
-      {/* Tickets Table */}
+      {/* Page Title */}
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold theme-text">Service Cycles</h1>
+        <p className="text-gray-600 mt-2">
+          Monthly preventive maintenance cycles for your equipment.
+        </p>
+      </div>
+
+      {/* Service Cycles Table */}
       <ThemedTable
         loading={loading}
         columns={columns}

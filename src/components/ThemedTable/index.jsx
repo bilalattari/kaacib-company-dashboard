@@ -1,6 +1,14 @@
 import { Table, Skeleton } from 'antd';
 
-const ThemedTable = ({ columns, data, summary, loading, pagination }) => {
+const ThemedTable = ({
+  columns,
+  data,
+  summary,
+  loading,
+  pagination,
+  onRow,
+  ...props
+}) => {
   const pageSize = 8;
 
   // Grab real data keys from columns
@@ -39,6 +47,7 @@ const ThemedTable = ({ columns, data, summary, loading, pagination }) => {
       dataSource={loading ? fakeData : data}
       rowKey={(record, index) => record.key || index}
       summary={summary}
+      onRow={onRow}
       pagination={{
         defaultPageSize: 10,
         showSizeChanger: true,
@@ -57,6 +66,7 @@ const ThemedTable = ({ columns, data, summary, loading, pagination }) => {
         },
       }}
       loading={loading ? { spinning: false } : false}
+      {...props}
     />
   );
 };
