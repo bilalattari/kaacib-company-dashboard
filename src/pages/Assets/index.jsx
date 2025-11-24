@@ -14,7 +14,7 @@ import ThemedTable from '../../components/ThemedTable';
 import DrawerForm from '../../components/DrawerForm';
 import ThemedButton from '../../components/ThemedButton';
 import { useNavigate } from 'react-router-dom';
-import { getCachedData, setCachedData } from '../../helpers/cache';
+import { clearCache, getCachedData, setCachedData } from '../../helpers/cache';
 
 const Assets = () => {
   const [data, setData] = useState([]);
