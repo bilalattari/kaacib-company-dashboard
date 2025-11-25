@@ -4,12 +4,16 @@ import ThemedButton from '../ThemedButton';
 import { FileText, Package, DollarSign, User, Download } from 'lucide-react';
 import { Modal, message } from 'antd';
 
-export default function TicketQuotation({ data, ticketId }) {
+export default function TicketQuotation({ data, ticketId, ticketStatus }) {
   console.log('Ticket Quotation Data =>', data);
 
   const [rejectModalVisible, setRejectModalVisible] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Check if quotation is already approved or rejected
+  const isApproved = ticketStatus === 'quotation_approved';
+  const isRejected = ticketStatus === 'quotation_rejected';
 
   // Function to download the quotation PDF
   const downloadQuotationPDF = () => {
@@ -84,11 +88,24 @@ export default function TicketQuotation({ data, ticketId }) {
       {true ? (
         <div className="space-y-6">
           {/* Quotation Header */}
-          <div className="flex items-center justify-between">
-            <h3 className="text-xl font-semibold theme-text flex items-center gap-2">
-              <FileText size={24} />
-              Quotation Details
-            </h3>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <h3 className="text-xl font-semibold theme-text flex items-center gap-2">
+                <FileText size={24} />
+                Quotation Details
+              </h3>
+              {/* Status Badge */}
+              {isApproved && (
+                <span className="px-4 py-1.5 bg-green-100 text-green-800 text-sm font-semibold rounded-full">
+                  ✓ Approved
+                </span>
+              )}
+              {isRejected && (
+                <span className="px-4 py-1.5 bg-red-100 text-red-800 text-sm font-semibold rounded-full">
+                  ✗ Rejected
+                </span>
+              )}
+            </div>
             {data?.pdf_url && (
               <ThemedButton
                 text="Download Quotation PDF"
@@ -222,20 +239,22 @@ export default function TicketQuotation({ data, ticketId }) {
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="flex items-center justify-center gap-4 mt-6">
-            <ThemedButton
-              text="Reject"
-              onClick={handleRejectClick}
-              className="bg-red-500 hover:bg-red-600"
-              loading={loading}
-            />
-            <ThemedButton
-              text="Approve"
-              onClick={handleApprove}
-              loading={loading}
-            />
-          </div>
+          {/* Action Buttons - Only show if not already approved or rejected */}
+          {!isApproved && !isRejected && (
+            <div className="flex items-center justify-center gap-4 mt-6">
+              <ThemedButton
+                text="Reject"
+                onClick={handleRejectClick}
+                className="bg-red-500 hover:bg-red-600"
+                loading={loading}
+              />
+              <ThemedButton
+                text="Approve"
+                onClick={handleApprove}
+                loading={loading}
+              />
+            </div>
+          )}
         </div>
       ) : null}
 

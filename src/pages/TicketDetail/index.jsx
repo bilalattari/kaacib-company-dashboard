@@ -206,7 +206,11 @@ const TicketDetail = () => {
       </ConfigProvider>
 
       {activeTab === 'quotation' && ticket?.type === 'corrective' && (
-        <TicketQuotation data={ticket?.quotation} ticketId={ticket?._id} />
+        <TicketQuotation
+          data={ticket?.quotation}
+          ticketId={ticket?._id}
+          ticketStatus={ticket?.status}
+        />
       )}
       {activeTab === 'history' && <TicketHistory data={data?.history} />}
       {activeTab === 'images' && <Images data={ticket?.service_end_images} />}
