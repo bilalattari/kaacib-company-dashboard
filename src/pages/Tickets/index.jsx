@@ -335,6 +335,21 @@ const Tickets = ({ isAsset, asset, isService, service, ticketType }) => {
             return <Tag color={color}>{statusText}</Tag>;
           },
         },
+        {
+          title: 'Actions',
+          key: 'actions',
+          render: (record) => (
+            <Space>
+              <Eye
+                size={16}
+                onClick={() => {
+                  navigate(`/tickets/${record._id}`);
+                }}
+                className="cursor-pointer theme-text hover:opacity-70"
+              />
+            </Space>
+          ),
+        },
       ];
     }
 
