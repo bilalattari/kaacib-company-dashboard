@@ -99,13 +99,6 @@ const AppLayout = () => {
             separator={<ChevronRight size={22} className="text-gray-400!" />}
             className="theme-text!"
           />
-          {name && (
-            <div className="text-primary text-md lg:text-lg font-semibold flex gap-1">
-              <span>Kaacib</span>
-              <X className="text-lg lg:text-xl" />
-              <p>{name}</p>
-            </div>
-          )}
         </div>
         <div className="px-2">
           <Outlet />
