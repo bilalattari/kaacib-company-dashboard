@@ -88,7 +88,7 @@ const AppLayout = () => {
 
   return (
     <div className="flex w-screen h-screen">
-      <div className="max-w-[12%]">
+      <div className="max-w-[15%]">
         <ThemedSidebar />
       </div>
 
