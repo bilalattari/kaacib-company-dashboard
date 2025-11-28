@@ -9,6 +9,7 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import ThemedButton from '@/components/ThemedButton';
 import { Eye, EyeClosed, Key } from 'lucide-react';
+import { setCompanyInfo } from '@/redux/slices/companySlice';
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -34,6 +35,7 @@ const Login = () => {
       setLoading(true);
       const res = await loginUser(values);
       dispatch(login(res.data.data));
+      dispatch(setCompanyInfo(res.data.data));
       message.success('Logged in');
       navigate('/dashboard');
     } catch (err) {
