@@ -87,10 +87,10 @@ const Tickets = ({ isAsset, asset, isService, service, ticketType }) => {
   const fetchTickets = async () => {
     try {
       setLoading(true);
-      
+
       // Map filter status to API status
       let apiStatus = filterStatus;
-      
+
       if (filterStatus === 'all') {
         // Don't send status param for 'all'
         apiStatus = undefined;
@@ -108,7 +108,8 @@ const Tickets = ({ isAsset, asset, isService, service, ticketType }) => {
       let ticketTypeParam = 'corrective';
       if (isService && service?._id) {
         // If ticketType prop is provided, use it; otherwise default to 'continuous' for scheduled
-        ticketTypeParam = ticketType === 'corrective' ? 'corrective' : 'continuous';
+        ticketTypeParam =
+          ticketType === 'corrective' ? 'corrective' : 'continuous';
       } else if (isAsset && asset?._id) {
         ticketTypeParam = '';
       }
@@ -119,10 +120,9 @@ const Tickets = ({ isAsset, asset, isService, service, ticketType }) => {
         ...(apiStatus && { status: apiStatus }),
         type: ticketTypeParam,
         ...(isAsset && asset?._id && { asset: asset._id, type: '' }),
-        ...(isService &&
-          service?._id && { parent: service._id }),
+        ...(isService && service?._id && { parent: service._id }),
       });
-      
+
       setData(res?.data?.tickets || []);
       setPagination((prev) => ({
         ...prev,
@@ -192,11 +192,11 @@ const Tickets = ({ isAsset, asset, isService, service, ticketType }) => {
 
   const fetchAssets = async () => {
     try {
-      const cachedAssets = getCachedData('assets');
-      if (cachedAssets) {
-        setAssets(cachedAssets);
-        return;
-      }
+      // const cachedAssets = getCachedData('assets');
+      // if (cachedAssets) {
+      //   setAssets(cachedAssets);
+      //   return;
+      // }
 
       const { data } = await getAssets();
       const assetsData = data?.data?.assets || [];
@@ -294,7 +294,8 @@ const Tickets = ({ isAsset, asset, isService, service, ticketType }) => {
           title: 'Scheduled Date',
           dataIndex: 'scheduled_date',
           key: 'scheduled_date',
-          render: (date) => (date ? format(parseISO(date), 'dd MMM, yyyy') : '—'),
+          render: (date) =>
+            date ? format(parseISO(date), 'dd MMM, yyyy') : '—',
         },
         {
           title: 'Worker/Team',
@@ -304,8 +305,8 @@ const Tickets = ({ isAsset, asset, isService, service, ticketType }) => {
             if (worker) {
               const firstName = worker.first_name || '';
               const lastName = worker.last_name || '';
-              return firstName || lastName 
-                ? `${firstName} ${lastName}`.trim() 
+              return firstName || lastName
+                ? `${firstName} ${lastName}`.trim()
                 : worker.name || '—';
             }
             return record.team?.name || '—';
@@ -397,14 +398,14 @@ const Tickets = ({ isAsset, asset, isService, service, ticketType }) => {
               ? 'green'
               : status === 'quotation_pending' || status === 'awaiting_approval'
               ? 'orange'
-              : status === 'in_progress' || status === 'on_site' || status === 'inspecting'
+              : status === 'in_progress' ||
+                status === 'on_site' ||
+                status === 'inspecting'
               ? 'cyan'
               : status === 'created'
               ? 'default'
               : 'volcano';
-          return (
-            <Tag color={color}>{getStatusDisplayText(status)}</Tag>
-          );
+          return <Tag color={color}>{getStatusDisplayText(status)}</Tag>;
         },
       },
       ...(isAsset
@@ -423,7 +424,9 @@ const Tickets = ({ isAsset, asset, isService, service, ticketType }) => {
         key: 'service.title.en',
         render: (text, record) => {
           // Handle both service.title.en and service.name
-          return record.service?.title?.en || record.service?.name || text || '—';
+          return (
+            record.service?.title?.en || record.service?.name || text || '—'
+          );
         },
       },
       {
@@ -499,7 +502,8 @@ const Tickets = ({ isAsset, asset, isService, service, ticketType }) => {
         name: 'description',
         label: 'Issue Description',
         type: 'textarea',
-        placeholder: 'Describe the issue. Example: AC not cooling, unusual noise, electrical tripping…',
+        placeholder:
+          'Describe the issue. Example: AC not cooling, unusual noise, electrical tripping…',
         rows: 3,
       },
       {
