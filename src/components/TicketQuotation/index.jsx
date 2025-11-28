@@ -12,8 +12,15 @@ export default function TicketQuotation({ data, ticketId, ticketStatus }) {
   const [loading, setLoading] = useState(false);
 
   // Check if quotation is already approved or rejected
-  const isApproved = ticketStatus === 'quotation_approved';
-  const isRejected = ticketStatus === 'quotation_rejected';
+  const isApproved = [
+    'quotation_approved',
+    'approved',
+    'in_progress',
+    'completed',
+  ].includes(ticketStatus);
+  const isRejected = ['quotation_rejected', 'closed', 'cancelled'].includes(
+    ticketStatus,
+  );
 
   // Function to download the quotation PDF
   const downloadQuotationPDF = () => {
