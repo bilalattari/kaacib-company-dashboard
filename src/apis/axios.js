@@ -2,10 +2,11 @@ import axios from 'axios';
 
 let URL;
 if (process.env.NODE_ENV === 'development') {
+  URL = 'http://localhost:5005';
 } else {
-  URL = process.env.VITE_BASE_URL;
+  // URL = process.env.VITE_BASE_URL;
+  URL = 'https://api.kaacib.com';
 }
-URL = 'https://api.kaacib.com';
 
 const getAuthToken = () => {
   const userData = JSON.parse(localStorage.getItem('user___token'));
