@@ -1,5 +1,14 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Card, Row, Col, Statistic, Tag, Spin, Empty, ConfigProvider } from 'antd';
+import {
+  Card,
+  Row,
+  Col,
+  Statistic,
+  Tag,
+  Spin,
+  Empty,
+  ConfigProvider,
+} from 'antd';
 import {
   BarChart,
   Bar,
@@ -148,7 +157,9 @@ const Dashboard = () => {
         if (col.key === 'status') {
           return (
             <Tag color={getStatusColor(text)}>
-              {String(text || '').toUpperCase().replace('_', ' ')}
+              {String(text || '')
+                .toUpperCase()
+                .replace('_', ' ')}
             </Tag>
           );
         }
@@ -182,7 +193,9 @@ const Dashboard = () => {
         if (col.key === 'status') {
           return (
             <Tag color={getStatusColor(text)}>
-              {String(text || '').toUpperCase().replace('_', ' ')}
+              {String(text || '')
+                .toUpperCase()
+                .replace('_', ' ')}
             </Tag>
           );
         }
@@ -211,7 +224,9 @@ const Dashboard = () => {
   // Table columns for asset health
   const assetHealthColumns = useMemo(() => {
     if (!dashboardData?.sections) return [];
-    const section = dashboardData.sections.find((s) => s.key === 'asset_health');
+    const section = dashboardData.sections.find(
+      (s) => s.key === 'asset_health',
+    );
     if (!section?.columns) return [];
     return section.columns.map((col) => ({
       title: col.label,
@@ -226,7 +241,9 @@ const Dashboard = () => {
           );
         }
         if (col.key === 'last_service' || col.key === 'next_due') {
-          return text && text !== 'N/A' ? format(parseISO(text), 'dd MMM, yyyy') : text || '—';
+          return text && text !== 'N/A'
+            ? format(parseISO(text), 'dd MMM, yyyy')
+            : text || '—';
         }
         return text || '—';
       },
@@ -236,7 +253,9 @@ const Dashboard = () => {
   // Charts data
   const chartsData = useMemo(() => {
     if (!dashboardData?.sections) return [];
-    const section = dashboardData.sections.find((s) => s.key === 'charts_block');
+    const section = dashboardData.sections.find(
+      (s) => s.key === 'charts_block',
+    );
     return section?.charts || [];
   }, [dashboardData]);
 
@@ -292,7 +311,12 @@ const Dashboard = () => {
                   minHeight: '220px',
                 }}
                 onClick={() => kpi.cta && handleCTAClick(kpi.cta)}
-                bodyStyle={{ padding: '24px', height: '100%', display: 'flex', flexDirection: 'column' }}
+                bodyStyle={{
+                  padding: '24px',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div
@@ -302,13 +326,19 @@ const Dashboard = () => {
                     {kpi.icon}
                   </div>
                 </div>
-                <div className="flex-grow mb-4">
+                <div className="grow mb-4">
                   <Statistic
                     title={
-                      <span className="text-gray-600 font-medium text-sm mb-2 block">{kpi.title}</span>
+                      <span className="text-gray-600 font-medium text-sm mb-2 block">
+                        {kpi.title}
+                      </span>
                     }
                     value={kpi.value}
-                    suffix={<span className="text-gray-500 text-base ml-1">{kpi.unit}</span>}
+                    suffix={
+                      <span className="text-gray-500 text-base ml-1">
+                        {kpi.unit}
+                      </span>
+                    }
                     valueStyle={{
                       color: themeColor,
                       fontSize: '28px',
@@ -333,7 +363,8 @@ const Dashboard = () => {
                               style={{ backgroundColor: themeColor }}
                             />
                             <span className="text-sm text-gray-600">
-                              {item.label}: <strong className="ml-1">{item.value}</strong>
+                              {item.label}:{' '}
+                              <strong className="ml-1">{item.value}</strong>
                             </span>
                           </div>
                         ))}
@@ -341,7 +372,9 @@ const Dashboard = () => {
                     )}
                     {kpi.secondary && (
                       <div className="text-sm mt-2">
-                        <span className="text-gray-600">{kpi.secondary.label}: </span>
+                        <span className="text-gray-600">
+                          {kpi.secondary.label}:{' '}
+                        </span>
                         <span
                           className="font-semibold ml-1"
                           style={{ color: themeColor }}
@@ -355,311 +388,329 @@ const Dashboard = () => {
               </Card>
             </Col>
           ))}
-      </Row>
+        </Row>
 
-      {/* Sections */}
-      <Row gutter={[24, 24]}>
-        {dashboardData.sections?.map((section) => {
-          if (section.type === 'table') {
-            let columns = [];
-            let data = section.rows || [];
+        {/* Sections */}
+        <Row gutter={[24, 24]}>
+          {dashboardData.sections?.map((section) => {
+            if (section.type === 'table') {
+              let columns = [];
+              let data = section.rows || [];
 
-            if (section.key === 'upcoming_scheduled') {
-              columns = upcomingScheduledColumns;
-            } else if (section.key === 'open_repairs') {
-              columns = openRepairsColumns;
-            } else if (section.key === 'asset_health') {
-              columns = assetHealthColumns;
-              data = data.map((row) => ({
-                ...row,
-                key: row.asset_id || row.id,
-              }));
-            } else {
-              // Generic table columns
-              columns = section.columns?.map((col) => ({
-                title: col.label,
-                dataIndex: col.key,
-                key: col.key,
-              })) || [];
+              if (section.key === 'upcoming_scheduled') {
+                columns = upcomingScheduledColumns;
+              } else if (section.key === 'open_repairs') {
+                columns = openRepairsColumns;
+              } else if (section.key === 'asset_health') {
+                columns = assetHealthColumns;
+                data = data.map((row) => ({
+                  ...row,
+                  key: row.asset_id || row.id,
+                }));
+              } else {
+                // Generic table columns
+                columns =
+                  section.columns?.map((col) => ({
+                    title: col.label,
+                    dataIndex: col.key,
+                    key: col.key,
+                  })) || [];
+              }
+
+              return (
+                <Col xs={24} lg={12} key={section.key}>
+                  <Card
+                    className="shadow-lg rounded-lg border-0 h-full"
+                    extra={
+                      section.cta && (
+                        <ThemedButton
+                          text={section.cta.label}
+                          icon={<ArrowRight size={16} />}
+                          variant="outlined"
+                          onClick={() => handleCTAClick(section.cta)}
+                          className="text-sm"
+                        />
+                      )
+                    }
+                    bodyStyle={{
+                      padding: '24px',
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    {section.description && (
+                      <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                        {section.description}
+                      </p>
+                    )}
+                    <div className="grow">
+                      <ThemedTable
+                        columns={columns}
+                        data={data}
+                        loading={loading}
+                        pagination={false}
+                        onRow={
+                          section.key === 'asset_health'
+                            ? (record) => ({
+                                onClick: () => {
+                                  if (record.route) {
+                                    navigate(record.route);
+                                  } else if (record.asset_id) {
+                                    navigate(`/assets/${record.asset_id}`);
+                                  }
+                                },
+                                className:
+                                  'cursor-pointer hover:bg-gray-50 transition-colors',
+                              })
+                            : undefined
+                        }
+                      />
+                    </div>
+                  </Card>
+                </Col>
+              );
             }
 
-            return (
-              <Col xs={24} lg={12} key={section.key}>
-                <Card
-                  className="shadow-lg rounded-lg border-0 h-full"
-                  extra={
-                    section.cta && (
-                      <ThemedButton
-                        text={section.cta.label}
-                        icon={<ArrowRight size={16} />}
-                        variant="outlined"
-                        onClick={() => handleCTAClick(section.cta)}
-                        className="text-sm"
-                      />
-                    )
-                  }
-                  bodyStyle={{
-                    padding: '24px',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }}
-                >
-                  {section.description && (
-                    <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                      {section.description}
-                    </p>
-                  )}
-                  <div className="flex-grow">
-                    <ThemedTable
-                      columns={columns}
-                      data={data}
-                      loading={loading}
-                      pagination={false}
-                      onRow={
-                        section.key === 'asset_health'
-                          ? (record) => ({
-                              onClick: () => {
-                                if (record.route) {
-                                  navigate(record.route);
-                                } else if (record.asset_id) {
-                                  navigate(`/assets/${record.asset_id}`);
-                                }
-                              },
-                              className: 'cursor-pointer hover:bg-gray-50 transition-colors',
-                            })
-                          : undefined
-                      }
-                    />
-                  </div>
-                </Card>
-              </Col>
-            );
-          }
-
-          if (section.type === 'list') {
-            return (
-              <Col xs={24} lg={12} key={section.key}>
-                <Card
-                  title={
-                    <div>
-                      <h3 className="text-lg font-semibold theme-text m-0">
-                        {section.title}
-                      </h3>
-                    </div>
-                  }
-                  className="shadow-lg rounded-lg border-0 h-full"
-                  extra={
-                    section.cta && (
-                      <ThemedButton
-                        text={section.cta.label}
-                        icon={<ArrowRight size={16} />}
-                        variant="outlined"
-                        onClick={() => handleCTAClick(section.cta)}
-                        className="text-sm"
-                      />
-                    )
-                  }
-                  headStyle={{
-                    borderBottom: `2px solid ${themeColor}20`,
-                    padding: '20px 24px',
-                    marginBottom: '0',
-                  }}
-                  bodyStyle={{
-                    padding: '24px',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }}
-                >
-                  {section.description && (
-                    <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                      {section.description}
-                    </p>
-                  )}
-                  {section.summary && (
-                    <div className="mb-6 p-5 bg-gray-50 rounded-lg flex flex-wrap gap-6">
-                      {Object.entries(section.summary).map(([key, value]) => (
-                        <div key={key} className="text-sm">
-                          <span className="font-medium capitalize text-gray-700">
-                            {key.replace('_', ' ')}:
-                          </span>{' '}
-                          <span
-                            className="font-semibold"
-                            style={{ color: themeColor }}
-                          >
-                            {value}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <div className="flex-grow">
-                    {section.items && section.items.length > 0 ? (
-                      <div className="flex flex-col gap-3">
-                        {section.items.map((item, idx) => (
-                          <div
-                            key={idx}
-                            className="border rounded-lg p-4 hover:shadow-md transition-shadow"
-                            style={{ borderColor: `${themeColor}30` }}
-                          >
-                            {JSON.stringify(item)}
+            if (section.type === 'list') {
+              return (
+                <Col xs={24} lg={12} key={section.key}>
+                  <Card
+                    title={
+                      <div>
+                        <h3 className="text-lg font-semibold theme-text m-0">
+                          {section.title}
+                        </h3>
+                      </div>
+                    }
+                    className="shadow-lg rounded-lg border-0 h-full"
+                    extra={
+                      section.cta && (
+                        <ThemedButton
+                          text={section.cta.label}
+                          icon={<ArrowRight size={16} />}
+                          variant="outlined"
+                          onClick={() => handleCTAClick(section.cta)}
+                          className="text-sm"
+                        />
+                      )
+                    }
+                    headStyle={{
+                      borderBottom: `2px solid ${themeColor}20`,
+                      padding: '20px 24px',
+                      marginBottom: '0',
+                    }}
+                    bodyStyle={{
+                      padding: '24px',
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    {section.description && (
+                      <p className="text-sm text-gray-600 mb-6 leading-relaxed">
+                        {section.description}
+                      </p>
+                    )}
+                    {section.summary && (
+                      <div className="mb-6 p-5 bg-gray-50 rounded-lg flex flex-wrap gap-6">
+                        {Object.entries(section.summary).map(([key, value]) => (
+                          <div key={key} className="text-sm">
+                            <span className="font-medium capitalize text-gray-700">
+                              {key.replace('_', ' ')}:
+                            </span>{' '}
+                            <span
+                              className="font-semibold"
+                              style={{ color: themeColor }}
+                            >
+                              {value}
+                            </span>
                           </div>
                         ))}
                       </div>
-                    ) : (
-                      <Empty description="No items available" />
                     )}
-                  </div>
-                </Card>
-              </Col>
-            );
-          }
-
-          if (section.type === 'charts') {
-            return (
-              <Col xs={24} key={section.key}>
-                <Card
-                  title={
-                    <div>
-                      <h3 className="text-lg font-semibold theme-text m-0">
-                        {section.title}
-                      </h3>
+                    <div className="grow">
+                      {section.items && section.items.length > 0 ? (
+                        <div className="flex flex-col gap-3">
+                          {section.items.map((item, idx) => (
+                            <div
+                              key={idx}
+                              className="border rounded-lg p-4 hover:shadow-md transition-shadow"
+                              style={{ borderColor: `${themeColor}30` }}
+                            >
+                              {JSON.stringify(item)}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <Empty description="No items available" />
+                      )}
                     </div>
-                  }
-                  className="shadow-lg rounded-lg border-0"
-                  headStyle={{
-                    borderBottom: `2px solid ${themeColor}20`,
-                    padding: '20px 24px',
-                    marginBottom: '0',
-                  }}
-                  bodyStyle={{
-                    padding: '24px',
-                  }}
-                >
-              <Row gutter={[24, 24]}>
-                {section.charts?.map((chart) => (
-                  <Col xs={24} lg={12} key={chart.key}>
-                    <Card
-                      title={
-                        <span className="font-medium theme-text">{chart.title}</span>
-                      }
-                      className="shadow-md rounded-lg border-0"
-                      headStyle={{
-                        borderBottom: `1px solid ${themeColor}15`,
-                        padding: '16px 20px',
-                        marginBottom: '0',
-                      }}
-                      bodyStyle={{
-                        padding: '20px',
-                      }}
-                    >
-                      <ResponsiveContainer width="100%" height={300}>
-                        {chart.chart_type === 'stacked_bar' ? (
-                          <BarChart data={chart.data}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                            <XAxis dataKey={chart.x_key} />
-                            <YAxis />
-                            <Tooltip
-                              contentStyle={{
-                                backgroundColor: '#fff',
-                                border: `1px solid ${themeColor}30`,
-                                borderRadius: '8px',
-                              }}
-                            />
-                            <Legend />
-                            {chart.series.map((series) => (
-                              <Bar
-                                key={series.key}
-                                dataKey={series.key}
-                                stackId="a"
-                                fill={
-                                  series.key === 'scheduled' ? themeColor : '#52c41a'
-                                }
-                                name={series.label}
-                                radius={[4, 4, 0, 0]}
-                              />
-                            ))}
-                          </BarChart>
-                        ) : chart.chart_type === 'bar' ? (
-                          <BarChart data={chart.data}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                            <XAxis dataKey={chart.x_key} />
-                            <YAxis />
-                            <Tooltip
-                              contentStyle={{
-                                backgroundColor: '#fff',
-                                border: `1px solid ${themeColor}30`,
-                                borderRadius: '8px',
-                              }}
-                            />
-                            <Legend />
-                            {chart.series.map((series, idx) => {
-                              const colors = [
-                                themeColor,
-                                '#52c41a',
-                                '#faad14',
-                                '#13c2c2',
-                              ];
-                              return (
-                                <Bar
-                                  key={series.key}
-                                  dataKey={series.key}
-                                  fill={colors[idx % colors.length]}
-                                  name={series.label}
-                                  radius={[4, 4, 0, 0]}
-                                />
-                              );
-                            })}
-                          </BarChart>
-                        ) : (
-                          <LineChart data={chart.data}>
-                            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                            <XAxis dataKey={chart.x_key} />
-                            <YAxis />
-                            <Tooltip
-                              contentStyle={{
-                                backgroundColor: '#fff',
-                                border: `1px solid ${themeColor}30`,
-                                borderRadius: '8px',
-                              }}
-                            />
-                            <Legend />
-                            {chart.series.map((series, idx) => {
-                              const colors = [
-                                themeColor,
-                                '#52c41a',
-                                '#faad14',
-                                '#13c2c2',
-                              ];
-                              return (
-                                <Line
-                                  key={series.key}
-                                  type="monotone"
-                                  dataKey={series.key}
-                                  stroke={colors[idx % colors.length]}
-                                  strokeWidth={3}
-                                  name={series.label}
-                                  dot={{ fill: colors[idx % colors.length], r: 4 }}
-                                  activeDot={{ r: 6 }}
-                                />
-                              );
-                            })}
-                          </LineChart>
-                        )}
-                      </ResponsiveContainer>
-                    </Card>
-                  </Col>
-                ))}
-              </Row>
-                </Card>
-              </Col>
-            );
-          }
+                  </Card>
+                </Col>
+              );
+            }
 
-          return null;
-        })}
-      </Row>
+            if (section.type === 'charts') {
+              return (
+                <Col xs={24} key={section.key}>
+                  <Card
+                    title={
+                      <div>
+                        <h3 className="text-lg font-semibold theme-text m-0">
+                          {section.title}
+                        </h3>
+                      </div>
+                    }
+                    className="shadow-lg rounded-lg border-0"
+                    headStyle={{
+                      borderBottom: `2px solid ${themeColor}20`,
+                      padding: '20px 24px',
+                      marginBottom: '0',
+                    }}
+                    bodyStyle={{
+                      padding: '24px',
+                    }}
+                  >
+                    <Row gutter={[24, 24]}>
+                      {section.charts?.map((chart) => (
+                        <Col xs={24} lg={12} key={chart.key}>
+                          <Card
+                            title={
+                              <span className="font-medium theme-text">
+                                {chart.title}
+                              </span>
+                            }
+                            className="shadow-md rounded-lg border-0"
+                            headStyle={{
+                              borderBottom: `1px solid ${themeColor}15`,
+                              padding: '16px 20px',
+                              marginBottom: '0',
+                            }}
+                            bodyStyle={{
+                              padding: '20px',
+                            }}
+                          >
+                            <ResponsiveContainer width="100%" height={300}>
+                              {chart.chart_type === 'stacked_bar' ? (
+                                <BarChart data={chart.data}>
+                                  <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    stroke="#f0f0f0"
+                                  />
+                                  <XAxis dataKey={chart.x_key} />
+                                  <YAxis />
+                                  <Tooltip
+                                    contentStyle={{
+                                      backgroundColor: '#fff',
+                                      border: `1px solid ${themeColor}30`,
+                                      borderRadius: '8px',
+                                    }}
+                                  />
+                                  <Legend />
+                                  {chart.series.map((series) => (
+                                    <Bar
+                                      key={series.key}
+                                      dataKey={series.key}
+                                      stackId="a"
+                                      fill={
+                                        series.key === 'scheduled'
+                                          ? themeColor
+                                          : '#52c41a'
+                                      }
+                                      name={series.label}
+                                      radius={[4, 4, 0, 0]}
+                                    />
+                                  ))}
+                                </BarChart>
+                              ) : chart.chart_type === 'bar' ? (
+                                <BarChart data={chart.data}>
+                                  <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    stroke="#f0f0f0"
+                                  />
+                                  <XAxis dataKey={chart.x_key} />
+                                  <YAxis />
+                                  <Tooltip
+                                    contentStyle={{
+                                      backgroundColor: '#fff',
+                                      border: `1px solid ${themeColor}30`,
+                                      borderRadius: '8px',
+                                    }}
+                                  />
+                                  <Legend />
+                                  {chart.series.map((series, idx) => {
+                                    const colors = [
+                                      themeColor,
+                                      '#52c41a',
+                                      '#faad14',
+                                      '#13c2c2',
+                                    ];
+                                    return (
+                                      <Bar
+                                        key={series.key}
+                                        dataKey={series.key}
+                                        fill={colors[idx % colors.length]}
+                                        name={series.label}
+                                        radius={[4, 4, 0, 0]}
+                                      />
+                                    );
+                                  })}
+                                </BarChart>
+                              ) : (
+                                <LineChart data={chart.data}>
+                                  <CartesianGrid
+                                    strokeDasharray="3 3"
+                                    stroke="#f0f0f0"
+                                  />
+                                  <XAxis dataKey={chart.x_key} />
+                                  <YAxis />
+                                  <Tooltip
+                                    contentStyle={{
+                                      backgroundColor: '#fff',
+                                      border: `1px solid ${themeColor}30`,
+                                      borderRadius: '8px',
+                                    }}
+                                  />
+                                  <Legend />
+                                  {chart.series.map((series, idx) => {
+                                    const colors = [
+                                      themeColor,
+                                      '#52c41a',
+                                      '#faad14',
+                                      '#13c2c2',
+                                    ];
+                                    return (
+                                      <Line
+                                        key={series.key}
+                                        type="monotone"
+                                        dataKey={series.key}
+                                        stroke={colors[idx % colors.length]}
+                                        strokeWidth={3}
+                                        name={series.label}
+                                        dot={{
+                                          fill: colors[idx % colors.length],
+                                          r: 4,
+                                        }}
+                                        activeDot={{ r: 6 }}
+                                      />
+                                    );
+                                  })}
+                                </LineChart>
+                              )}
+                            </ResponsiveContainer>
+                          </Card>
+                        </Col>
+                      ))}
+                    </Row>
+                  </Card>
+                </Col>
+              );
+            }
+
+            return null;
+          })}
+        </Row>
       </div>
     </ConfigProvider>
   );
